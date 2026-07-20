@@ -18,6 +18,18 @@ export const billingEnabled = createServerFn({ method: "GET" }).handler(async ()
   return stripeConfigured();
 });
 
+// Whether the signed-in user actually has a Stripe subscription behind their
+// plan (vs. a free beta unlock). Gates the "Manage subscription" button.
+export const hasStripeSubscription = createServerFn({ method: "GET" }).handler(async () => {
+  const user = await getSessionUser();
+  const { DB } = bindings();
+  if (!user || !DB) return false;
+  const row = await DB.prepare("SELECT stripe_customer_id FROM users WHERE id = ?1")
+    .bind(user.id)
+    .first<{ stripe_customer_id: string | null }>();
+  return Boolean(row?.stripe_customer_id);
+});
+
 // Start a Stripe Checkout for the $10/mo plan; returns the redirect URL.
 export const startCheckout = createServerFn({ method: "POST" }).handler(async () => {
   const user = await getSessionUser();

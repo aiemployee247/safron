@@ -2,7 +2,12 @@ import { Link, createFileRoute, redirect, useRouter } from "@tanstack/react-rout
 import { useState } from "react";
 
 import { currentUser, signOut, unlockAllAccess } from "../lib/api/auth.functions";
-import { billingEnabled, openBillingPortal, startCheckout } from "../lib/api/billing.functions";
+import {
+  billingEnabled,
+  hasStripeSubscription,
+  openBillingPortal,
+  startCheckout,
+} from "../lib/api/billing.functions";
 import { tutorials } from "../lib/tutorials";
 
 export const Route = createFileRoute("/members")({
@@ -14,6 +19,7 @@ export const Route = createFileRoute("/members")({
   loader: async ({ context }) => ({
     user: context.user,
     billing: await billingEnabled(),
+    hasSubscription: await hasStripeSubscription(),
   }),
   head: () => ({
     meta: [{ title: "Members: Agent Garage" }, { name: "robots", content: "noindex" }],
@@ -22,7 +28,7 @@ export const Route = createFileRoute("/members")({
 });
 
 function MembersPage() {
-  const { user, billing } = Route.useLoaderData();
+  const { user, billing, hasSubscription } = Route.useLoaderData();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -137,7 +143,7 @@ function MembersPage() {
                   Templates and member Q&A arrive with each new build.
                 </p>
               </div>
-              {billing ? (
+              {billing && hasSubscription ? (
                 <button
                   type="button"
                   onClick={onManage}
@@ -146,6 +152,10 @@ function MembersPage() {
                 >
                   {busy ? "Opening" : "Manage subscription"}
                 </button>
+              ) : billing ? (
+                <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-steel">
+                  Beta member · no billing
+                </span>
               ) : null}
             </div>
           </div>
