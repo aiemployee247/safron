@@ -179,6 +179,193 @@ echo "then: sudo systemctl restart pit-crew-fleet"
 echo ""
 echo "Tutorial: https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control"
 `,
+  'pit-crew-mission-control-mac': String.raw`#!/usr/bin/env bash
+# Agent Garage auto-installer — Pit Crew, macOS local edition
+# https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control
+# Installs the same 5-agent Telegram fleet + Pit Board dashboard as the VPS
+# installer, but locally on your Mac via launchd (no sudo, no systemd).
+# Safe to re-run: it detects an existing install and asks before touching it.
+set -euo pipefail
+
+BASE="https://agent.qepilot.com/pit-crew-starter"
+ROOT="$HOME/pit-crew"
+PLIST_DIR="$HOME/Library/LaunchAgents"
+LABEL_FLEET="com.agentgarage.pitcrew.fleet"
+LABEL_BOARD="com.agentgarage.pitcrew.board"
+
+if [ -t 1 ]; then B=$'\033[1m'; DIM=$'\033[2m'; G=$'\033[32m'; R=$'\033[31m'; ACC=$'\033[33m'; Z=$'\033[0m'
+else B=""; DIM=""; G=""; R=""; ACC=""; Z=""; fi
+step() { printf '\n%s%s==> %s%s\n' "$B" "$ACC" "$*" "$Z"; }
+ok()   { printf '  %s✓%s %s\n' "$G" "$Z" "$*"; }
+warn() { printf '  %s!%s %s\n' "$ACC" "$Z" "$*"; }
+err()  { printf '  %s✗%s %s\n' "$R" "$Z" "$*"; }
+
+printf '\n%s%sAgent Garage — Pit Crew (macOS, local)%s\n' "$B" "$ACC" "$Z"
+printf '%sInstalls a 5-agent Telegram fleet + live dashboard on this Mac.%s\n' "$DIM" "$Z"
+
+# --- 1. must be a Mac --------------------------------------------------------
+step "Checking your OS"
+if [ "$(uname -s)" != "Darwin" ]; then
+  err "This installer is for macOS only."
+  printf '  Run the Linux/VPS installer instead:\n'
+  printf '  %scurl -fsSL https://agent.qepilot.com/install/pit-crew-mission-control | bash%s\n' "$DIM" "$Z"
+  exit 1
+fi
+ok "macOS detected ($(sw_vers -productVersion 2>/dev/null || echo unknown))"
+
+# --- 2. detect an existing install, ask before touching anything ------------
+step "Checking for an existing install"
+EXISTING=0
+[ -d "$ROOT" ] && EXISTING=1
+if command -v launchctl >/dev/null 2>&1; then
+  launchctl list 2>/dev/null | grep -q "$LABEL_FLEET" && EXISTING=1
+  launchctl list 2>/dev/null | grep -q "$LABEL_BOARD" && EXISTING=1
+fi
+
+if [ "$EXISTING" = "1" ]; then
+  warn "Found an existing Pit Crew install at $ROOT."
+  if [ -d "$ROOT" ]; then
+    printf '    %s\n' "$DIM$(du -sh "$ROOT" 2>/dev/null | awk '{print $1}') on disk, including its activity log, kanban board, and notes.$Z"
+  fi
+  printf '\n  %sThis will stop the running services and delete %s, then reinstall fresh.%s\n' "$B" "$ROOT" "$Z"
+  read -r -p "  Continue? [y/N] " REPLY </dev/tty || REPLY=""
+  case "$REPLY" in
+    y|Y|yes|YES) : ;;
+    *) printf '\n  No changes made. Exiting.\n\n'; exit 0 ;;
+  esac
+  step "Removing the existing install"
+  launchctl unload "$PLIST_DIR/$LABEL_FLEET.plist" 2>/dev/null || true
+  launchctl unload "$PLIST_DIR/$LABEL_BOARD.plist" 2>/dev/null || true
+  rm -f "$PLIST_DIR/$LABEL_FLEET.plist" "$PLIST_DIR/$LABEL_BOARD.plist"
+  rm -rf "$ROOT"
+  ok "Removed."
+else
+  ok "No existing install found — clean start."
+fi
+
+# --- 3. prerequisites — confirm before changing anything on the system ------
+step "Checking prerequisites"
+
+if ! xcode-select -p >/dev/null 2>&1; then
+  err "Xcode Command Line Tools are required (needed to build the local database)."
+  printf '  Run this yourself, click through the installer, then re-run this script:\n'
+  printf '  %sxcode-select --install%s\n' "$DIM" "$Z"
+  exit 1
+fi
+ok "Xcode Command Line Tools present"
+
+if ! command -v node >/dev/null 2>&1 || [ "$(node -e 'process.stdout.write(process.versions.node.split(".")[0])')" -lt 20 ]; then
+  warn "Node.js 20+ not found."
+  if command -v brew >/dev/null 2>&1; then
+    read -r -p "  Install Node.js now via Homebrew? [Y/n] " REPLY </dev/tty || REPLY="y"
+    case "$REPLY" in
+      n|N|no|NO)
+        err "Node.js is required. Install it, then re-run this script."; exit 1 ;;
+      *)
+        brew install node@20 >/dev/null 2>&1 || brew install node
+        brew link --overwrite --force node@20 >/dev/null 2>&1 || true
+        ;;
+    esac
+  else
+    err "Homebrew isn't installed either. Install Node.js 20+ from https://nodejs.org,"
+    printf '  then re-run this script.\n'
+    exit 1
+  fi
+fi
+ok "Node $(node -v)"
+
+# --- 4. the three secrets, explained one at a time ---------------------------
+step "Fleet credentials"
+printf '  Three values, entered once and stored only in %s/.env (chmod 600).\n\n' "$ROOT"
+read -r -p "  Telegram bot token (from @BotFather): " BOT_TOKEN </dev/tty
+read -r -p "  Your numeric Telegram user id (from @userinfobot): " OWNER_ID </dev/tty
+read -r -p "  Anthropic API key (sk-ant-...): " ANTHROPIC_API_KEY </dev/tty
+[ -n "$BOT_TOKEN" ] && [ -n "$OWNER_ID" ] && [ -n "$ANTHROPIC_API_KEY" ] || {
+  err "All three values are required."; exit 1;
+}
+
+# --- 5. fetch the fleet + dashboard, install deps ----------------------------
+step "Fetching the fleet"
+mkdir -p "$ROOT/board" "$ROOT/logs"
+cd "$ROOT"
+for pair in \
+  "package.json:package.json" \
+  "agents.js:agents.js" \
+  "logbook.js:logbook.js" \
+  "fleet.js:fleet.js" \
+  "routing.example.json:routing.example.json" \
+  "board-server.js:board/server.js" \
+  "board-index.html.txt:board/index.html"; do
+  remote="$(echo "$pair" | cut -d: -f1)"
+  dest="$(echo "$pair" | cut -d: -f2)"
+  curl -fsSL "$BASE/$remote" -o "$ROOT/$dest"
+done
+cp -n routing.example.json routing.json
+
+cat > .env <<EOF
+BOT_TOKEN=$BOT_TOKEN
+OWNER_ID=$OWNER_ID
+ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
+EOF
+chmod 600 .env
+ok "Fleet files in place"
+
+step "Installing dependencies (compiles the local database, ~30-60s)"
+npm install >/dev/null
+ok "Dependencies installed"
+
+# --- 6. launchd services, the Mac equivalent of systemd ----------------------
+step "Setting up background services (launchd)"
+mkdir -p "$PLIST_DIR"
+NODE_BIN="$(command -v node)"
+
+cat > "$PLIST_DIR/$LABEL_FLEET.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$LABEL_FLEET</string>
+  <key>ProgramArguments</key><array><string>$NODE_BIN</string><string>$ROOT/fleet.js</string></array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>$ROOT/logs/fleet.log</string>
+  <key>StandardErrorPath</key><string>$ROOT/logs/fleet.err.log</string>
+</dict></plist>
+EOF
+
+cat > "$PLIST_DIR/$LABEL_BOARD.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$LABEL_BOARD</string>
+  <key>ProgramArguments</key><array><string>$NODE_BIN</string><string>$ROOT/board/server.js</string></array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>$ROOT/logs/board.log</string>
+  <key>StandardErrorPath</key><string>$ROOT/logs/board.err.log</string>
+</dict></plist>
+EOF
+
+launchctl unload "$PLIST_DIR/$LABEL_FLEET.plist" 2>/dev/null || true
+launchctl unload "$PLIST_DIR/$LABEL_BOARD.plist" 2>/dev/null || true
+launchctl load -w "$PLIST_DIR/$LABEL_FLEET.plist"
+launchctl load -w "$PLIST_DIR/$LABEL_BOARD.plist"
+sleep 3
+ok "Fleet + dashboard running"
+
+# --- 7. hand off to the human -------------------------------------------------
+step "Done"
+curl -s -o /dev/null -w "  local check (want 200): %{http_code}\n" http://127.0.0.1:8787/ || true
+printf '\n  %sOpen the dashboard:%s   open http://127.0.0.1:8787\n' "$B" "$Z"
+printf '  %sTest the fleet:%s       message your bot on Telegram — the Foreman answers now.\n' "$B" "$Z"
+printf '\n  To route the four specialists to their own Telegram topics, fill\n'
+printf '  %s/routing.json with your topic thread ids (tutorial Prompt 7-8), then:\n' "$ROOT"
+printf '    launchctl unload %s/%s.plist && launchctl load -w %s/%s.plist\n' "$PLIST_DIR" "$LABEL_FLEET" "$PLIST_DIR" "$LABEL_FLEET"
+printf '\n  Logs:  tail -f %s/logs/fleet.log\n' "$ROOT"
+printf '  Stop:  launchctl unload %s/%s.plist %s/%s.plist\n' "$PLIST_DIR" "$LABEL_FLEET" "$PLIST_DIR" "$LABEL_BOARD"
+printf '\n  Tutorial: https://agent.qepilot.com/tutorials/pit-crew-mission-control\n\n'
+`,
   'telegram-ops-bot': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Telegram Ops Bot
 # https://agent-garage.higgsfield.app/tutorials/telegram-ops-bot

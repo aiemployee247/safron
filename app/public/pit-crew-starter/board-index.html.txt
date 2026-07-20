@@ -66,6 +66,31 @@
       .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
       .bar > span { display: block; height: 100%; background: linear-gradient(90deg, #eacf83, #d09945); }
       .status { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); margin-top: 20px; }
+      /* kanban */
+      .kanban { display: grid; gap: 12px; grid-template-columns: 1fr; }
+      @media (min-width: 820px) { .kanban { grid-template-columns: repeat(3, 1fr); } }
+      .kcol h3 { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
+      .kcard { background: var(--panel-hi); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; }
+      .kcard .txt { flex: 1; word-break: break-word; }
+      .kcard button { font-family: var(--mono); font-size: 11px; color: var(--faint); background: none; border: 0; cursor: pointer; padding: 2px 4px; }
+      .kcard button:hover { color: var(--ink); }
+      .kadd { display: flex; gap: 6px; margin-top: 8px; }
+      .kadd input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 12px; padding: 7px 9px; }
+      .kadd button { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--signal); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+      /* docs */
+      .docs { display: grid; gap: 16px; grid-template-columns: 1fr; }
+      @media (min-width: 820px) { .docs { grid-template-columns: 220px 1fr; } }
+      .doc-item { font-family: var(--mono); font-size: 12px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--dim); }
+      .doc-item:hover { background: var(--panel-hi); }
+      .doc-item.active { background: var(--panel-hi); color: var(--gold); }
+      .doc-editor textarea { width: 100%; min-height: 320px; background: var(--panel-hi); border: 1px solid var(--line);
+        border-radius: 10px; color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 12px; resize: vertical; }
+      .doc-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+      .doc-toolbar input { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 12px; padding: 7px 9px; width: 220px; }
+      .btn { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink);
+        background: var(--panel-hi); border: 1px solid var(--line-hi); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+      .btn:hover { border-color: var(--gold); color: var(--gold); }
+      .btn.danger:hover { border-color: var(--coral); color: var(--coral); }
     </style>
   </head>
   <body>
@@ -78,6 +103,9 @@
       <button class="tab" data-view="agents">Agents</button>
       <button class="tab" data-view="tasks">Tasks</button>
       <button class="tab" data-view="monitor">System Monitor</button>
+      <button class="tab" data-view="host">Host</button>
+      <button class="tab" data-view="kanban">Kanban</button>
+      <button class="tab" data-view="docs">Docs</button>
     </div>
 
     <!-- COMMAND CENTER -->
@@ -137,6 +165,48 @@
       </div>
     </section>
 
+    <!-- HOST -->
+    <section class="view" id="view-host">
+      <div class="kpis">
+        <div class="kpi"><div class="label">Platform</div><div class="value" id="host-platform" style="font-size:20px">—</div></div>
+        <div class="kpi"><div class="label">Uptime</div><div class="value" id="host-uptime" style="font-size:20px">—</div></div>
+        <div class="kpi"><div class="label">Load avg (1m)</div><div class="value" id="host-load" style="font-size:20px">—</div></div>
+        <div class="kpi"><div class="label">Memory used</div><div class="value" id="host-mem" style="font-size:20px">—</div></div>
+      </div>
+      <div class="section" style="margin-top:16px">
+        <h2><span class="slash">//</span> Scheduled jobs</h2>
+        <div id="host-jobs"><div class="empty">checking…</div></div>
+        <p class="empty" style="margin-top:12px">launchd on macOS, systemd on Linux — filtered to this crew's own jobs.</p>
+      </div>
+    </section>
+
+    <!-- KANBAN -->
+    <section class="view" id="view-kanban">
+      <div class="kanban" id="kanban-board"></div>
+    </section>
+
+    <!-- DOCS -->
+    <section class="view" id="view-docs">
+      <div class="docs">
+        <div class="section">
+          <h2><span class="slash">//</span> Notes</h2>
+          <div id="doc-list"><div class="empty">no notes yet</div></div>
+          <div class="doc-toolbar" style="margin-top:12px">
+            <input id="doc-new-name" placeholder="new-note.md" />
+            <button class="btn" id="doc-new-btn">New</button>
+          </div>
+        </div>
+        <div class="section doc-editor">
+          <h2><span class="slash">//</span> <span id="doc-current">Select a note</span></h2>
+          <textarea id="doc-body" placeholder="Nothing selected." disabled></textarea>
+          <div class="doc-toolbar" style="margin-top:10px">
+            <button class="btn" id="doc-save-btn" disabled>Save</button>
+            <button class="btn danger" id="doc-delete-btn" disabled>Delete</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="status" id="status">connecting…</div>
 
     <script>
@@ -150,6 +220,118 @@
         const btn = e.target.closest(".tab"); if (!btn) return;
         document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
         document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + btn.dataset.view));
+        if (btn.dataset.view === "host") loadHost();
+        if (btn.dataset.view === "kanban") loadKanban();
+        if (btn.dataset.view === "docs") loadDocs();
+      });
+
+      // ---- Host ----
+      function fmtUptime(sec) {
+        const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60);
+        return (d ? d + "d " : "") + h + "h " + m + "m";
+      }
+      function fmtBytes(n) {
+        const gb = n / 1024 / 1024 / 1024;
+        return gb >= 1 ? gb.toFixed(1) + " GB" : (n / 1024 / 1024).toFixed(0) + " MB";
+      }
+      async function loadHost() {
+        try {
+          const h = await fetch("/api/host").then((r) => r.json());
+          document.getElementById("host-platform").textContent = h.platform === "darwin" ? "macOS" : h.platform;
+          document.getElementById("host-uptime").textContent = fmtUptime(h.uptimeSec);
+          document.getElementById("host-load").textContent = (h.loadAvg[0] || 0).toFixed(2);
+          document.getElementById("host-mem").textContent = fmtBytes(h.memUsed) + " / " + fmtBytes(h.memTotal);
+          document.getElementById("host-jobs").innerHTML = h.jobs && h.jobs.length
+            ? h.jobs.map((j) => '<div class="row"><span class="a">' + esc(j.status || j.active || "") + '</span><span class="s">' + esc(j.label) + "</span></div>").join("")
+            : '<div class="empty">no jobs found for this crew</div>';
+        } catch { /* leave last-known values on screen */ }
+      }
+
+      // ---- Kanban ----
+      const KCOLS = [["todo", "To do"], ["doing", "In progress"], ["done", "Done"]];
+      async function loadKanban() {
+        const board = await fetch("/api/kanban").then((r) => r.json());
+        document.getElementById("kanban-board").innerHTML = KCOLS.map(([key, label]) => {
+          const cards = (board[key] || []).map((c) =>
+            '<div class="kcard" data-id="' + c.id + '"><span class="txt">' + esc(c.text) + '</span>' +
+            (key !== "done" ? '<button data-move="' + (key === "todo" ? "doing" : "done") + '" data-id="' + c.id + '" title="Move forward">→</button>' : '') +
+            '<button data-del="' + c.id + '" title="Delete">×</button></div>'
+          ).join("") || '<div class="empty">empty</div>';
+          return '<div class="kcol"><h3>' + label + '</h3><div data-col="' + key + '">' + cards + '</div>' +
+            (key === "todo" ? '<div class="kadd"><input id="kadd-input" placeholder="Add a card…" /><button id="kadd-btn">Add</button></div>' : '') +
+            '</div>';
+        }).join("");
+
+        document.getElementById("kanban-board").querySelectorAll("[data-move]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "move", id: b.dataset.id, to: b.dataset.move }) });
+            loadKanban();
+          }));
+        document.getElementById("kanban-board").querySelectorAll("[data-del]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "delete", id: b.dataset.del }) });
+            loadKanban();
+          }));
+        const addBtn = document.getElementById("kadd-btn");
+        if (addBtn) addBtn.addEventListener("click", async () => {
+          const input = document.getElementById("kadd-input");
+          const text = input.value.trim();
+          if (!text) return;
+          await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "add", column: "todo", text }) });
+          input.value = "";
+          loadKanban();
+        });
+      }
+
+      // ---- Docs ----
+      let currentDoc = null;
+      async function loadDocs() {
+        const files = await fetch("/api/content").then((r) => r.json());
+        document.getElementById("doc-list").innerHTML = files.length
+          ? files.map((f) => '<div class="doc-item' + (f.file === currentDoc ? " active" : "") + '" data-file="' + esc(f.file) + '">' + esc(f.file) + "</div>").join("")
+          : '<div class="empty">no notes yet</div>';
+        document.getElementById("doc-list").querySelectorAll("[data-file]").forEach((el) =>
+          el.addEventListener("click", () => openDoc(el.dataset.file)));
+      }
+      async function openDoc(file) {
+        const r = await fetch("/api/content?file=" + encodeURIComponent(file)).then((r) => r.json());
+        currentDoc = file;
+        document.getElementById("doc-current").textContent = file;
+        const ta = document.getElementById("doc-body");
+        ta.value = r.body || "";
+        ta.disabled = false;
+        document.getElementById("doc-save-btn").disabled = false;
+        document.getElementById("doc-delete-btn").disabled = false;
+        loadDocs();
+      }
+      document.getElementById("doc-new-btn").addEventListener("click", async () => {
+        const nameInput = document.getElementById("doc-new-name");
+        let name = nameInput.value.trim();
+        if (!name) return;
+        if (!/\.(md|txt)$/.test(name)) name += ".md";
+        await fetch("/api/content?file=" + encodeURIComponent(name), { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: "" }) });
+        nameInput.value = "";
+        await openDoc(name);
+      });
+      document.getElementById("doc-save-btn").addEventListener("click", async () => {
+        if (!currentDoc) return;
+        await fetch("/api/content?file=" + encodeURIComponent(currentDoc), { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: document.getElementById("doc-body").value }) });
+      });
+      document.getElementById("doc-delete-btn").addEventListener("click", async () => {
+        if (!currentDoc || !confirm("Delete " + currentDoc + "?")) return;
+        await fetch("/api/content?file=" + encodeURIComponent(currentDoc), { method: "DELETE" });
+        currentDoc = null;
+        document.getElementById("doc-current").textContent = "Select a note";
+        const ta = document.getElementById("doc-body");
+        ta.value = ""; ta.disabled = true;
+        document.getElementById("doc-save-btn").disabled = true;
+        document.getElementById("doc-delete-btn").disabled = true;
+        loadDocs();
       });
 
       function agentCard(a, compact) {

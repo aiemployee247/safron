@@ -24,7 +24,10 @@ export const Route = createFileRoute("/tutorials/$slug_/install")({
 
 function InstallPage() {
   const { meta, viewer } = Route.useLoaderData();
-  const command = `curl -fsSL https://agent-garage.higgsfield.app/install/${meta.slug} | bash`;
+  const hasMacInstaller = meta.slug === "pit-crew-mission-control";
+  const [os, setOs] = useState<"linux" | "mac">("linux");
+  const slug = os === "mac" ? `${meta.slug}-mac` : meta.slug;
+  const command = `curl -fsSL https://agent-garage.higgsfield.app/install/${slug} | bash`;
 
   return (
     <main className="blueprint-grid px-4 py-14 md:px-6 md:py-20">
@@ -85,16 +88,42 @@ function InstallPage() {
 
           {viewer.allAccess ? (
             <div className="mt-6">
-              <p className="text-sm leading-relaxed text-ink-dim">
-                Run this on a fresh Debian/Ubuntu VPS as a sudo-capable user. The script asks
-                for your bot token and Telegram user id, then sets up everything the tutorial
-                builds by hand.
+              {hasMacInstaller ? (
+                <div className="flex gap-2 font-plex text-xs uppercase tracking-wide">
+                  <button
+                    type="button"
+                    onClick={() => setOs("linux")}
+                    className={
+                      os === "linux"
+                        ? "rounded-md border border-signal/50 bg-signal/10 px-3 py-1.5 text-signal"
+                        : "rounded-md border border-line-hi px-3 py-1.5 text-ink-dim hover:text-ink"
+                    }
+                  >
+                    Linux / VPS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOs("mac")}
+                    className={
+                      os === "mac"
+                        ? "rounded-md border border-signal/50 bg-signal/10 px-3 py-1.5 text-signal"
+                        : "rounded-md border border-line-hi px-3 py-1.5 text-ink-dim hover:text-ink"
+                    }
+                  >
+                    macOS (local)
+                  </button>
+                </div>
+              ) : null}
+              <p className="mt-4 text-sm leading-relaxed text-ink-dim">
+                {os === "mac"
+                  ? "Run this on your Mac. It checks for an existing install and asks before touching anything, installs Node via Homebrew if needed, then runs the fleet + dashboard locally via launchd."
+                  : "Run this on a fresh Debian/Ubuntu VPS as a sudo-capable user. The script asks for your bot token and Telegram user id, then sets up everything the tutorial builds by hand."}
               </p>
               <CommandBlock command={command} />
               <p className="mt-3 font-plex text-xs text-steel">
                 Read any script before you pipe it to bash — this one is short on purpose.{" "}
                 <a
-                  href={`/install/${meta.slug}`}
+                  href={`/install/${slug}`}
                   className="text-cobalt underline underline-offset-4 hover:text-ink"
                 >
                   View the source
