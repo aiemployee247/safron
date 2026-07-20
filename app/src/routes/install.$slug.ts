@@ -40,9 +40,19 @@ sudo chown -R "$USER" "$ROOT"
 cd "$ROOT"
 
 # --- fetch the real fleet files --------------------------------------------
+# Left of the colon is the file on the site; right is where it lands locally.
 echo "Fetching fleet files..."
-for f in package.json agents.js logbook.js fleet.js routing.example.json board/server.js board/index.html; do
-  curl -fsSL "$BASE/$f" -o "$ROOT/$f"
+for pair in \
+  "package.json:package.json" \
+  "agents.js:agents.js" \
+  "logbook.js:logbook.js" \
+  "fleet.js:fleet.js" \
+  "routing.example.json:routing.example.json" \
+  "board-server.js:board/server.js" \
+  "board-index.html:board/index.html"; do
+  remote="$(echo "$pair" | cut -d: -f1)"
+  dest="$(echo "$pair" | cut -d: -f2)"
+  curl -fsSL "$BASE/$remote" -o "$ROOT/$dest"
 done
 cp -n routing.example.json routing.json
 
