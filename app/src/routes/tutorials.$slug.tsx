@@ -183,7 +183,7 @@ function TutorialPage() {
           <section className="km-panel mt-8 p-6 md:p-8">
             <h2 className="text-xl font-bold tracking-tight text-ink">Unlock the downloads</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-dim">
-              All {promptCount} prompts as one .md file, plus the one-line auto-installer.
+              All {promptCount} prompts as one .md file{meta.installer ? ", plus the one-line auto-installer" : ""}.
               All-Access unlocks every tutorial, template, and download on the platform —
               free while the garage is in beta.
             </p>
