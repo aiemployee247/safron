@@ -30,7 +30,10 @@ export const Route = createFileRoute('/api/auth/google/callback')({
       GET: async ({ request }) => {
         const env = bindings()
         const url = new URL(request.url)
-        const origin = url.origin
+        // See api.auth.google.ts — PUBLIC_ORIGIN must match what was sent as
+        // redirect_uri in the initial auth request, or Google's token exchange
+        // will reject it too.
+        const origin = env.PUBLIC_ORIGIN || url.origin
         const fail = (reason: string) =>
           redirectWith(`${origin}/sign-in?error=${reason}`, [CLEAR_STATE])
 

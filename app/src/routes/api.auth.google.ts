@@ -11,7 +11,10 @@ export const Route = createFileRoute('/api/auth/google')({
     handlers: {
       GET: async ({ request }) => {
         const env = bindings()
-        const origin = new URL(request.url).origin
+        // Behind the VPS reverse proxy, request.url reflects the internal
+        // Miniflare/Node address, not the public domain — PUBLIC_ORIGIN is the
+        // source of truth there. Falls back to the request origin (Higgsfield).
+        const origin = env.PUBLIC_ORIGIN || new URL(request.url).origin
         if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
           return new Response(null, {
             status: 302,
