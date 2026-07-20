@@ -8,21 +8,22 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { button } from "@higgsfield/quanta/button";
-import { NotFound } from "@higgsfield/quanta/not-found";
 
 import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
+import { currentUser } from "../lib/api/auth.functions";
+import { SiteNav } from "../components/site/nav";
+import { SiteFooter } from "../components/site/footer";
+import { MotionRoot } from "../components/site/motion";
 // Page metadata (browser <title>/favicon + social og: tags) committed into the
 // repo by the marketplace meta API and read at BUILD time — no runtime fetch.
-// Editing it via the app settings UI rewrites this file and redeploys the app.
 import appMetaJson from "../app-meta.json";
 
 declare const __HF_DESIGN_INSPECTOR__: boolean;
 
-// Built-in defaults for any field that isn't set in app-meta.json.
-const DEFAULT_TITLE = "Higgsfield App";
-const DEFAULT_DESCRIPTION = "Higgsfield Generated Project";
+const DEFAULT_TITLE = "Agent Garage";
+const DEFAULT_DESCRIPTION =
+  "Step-by-step tutorials for AI agents, automation, and self-hosting. Every build ends with something working.";
 
 type AppMeta = {
   og_title?: string | null;
@@ -34,33 +35,20 @@ type AppMeta = {
 
 const appMeta = appMetaJson as AppMeta;
 
-// Build the document head (title / description / og: / twitter: / favicon) from
-// app-meta.json, falling back to the defaults above for any unset field.
-// og_title/og_description double as the browser <title> and meta description;
-// og_image_url (when set) also drives the twitter card + image. Built from
-// inline tag literals (conditional spreads for the optional image/favicon) so
-// it matches the head() shape TanStack expects.
-// favicon/og images live in THIS app's own /assets, so the host is never
-// inherent. app-meta.json may carry an absolute higgsfield-app URL with a STALE
-// host — baked from the app this one was copied/remixed/renamed from — which would
-// serve the wrong app's favicon/og. Strip any higgsfield-app host (prod
-// higgsfield.app + dev higgsfield-dev.app) down to a root-relative path so it
-// always resolves against whoever serves THIS page (preview / prod / custom
-// domain). Genuinely external URLs (a CDN image the owner set) are left absolute.
 const APP_HOST_ZONES = ["higgsfield.app", "higgsfield-dev.app"];
 
 function toOwnAssetUrl(value: string | null | undefined): string | null {
   if (!value) return null;
-  if (value.startsWith("/")) return value; // already root-relative
+  if (value.startsWith("/")) return value;
   try {
     const u = new URL(value);
     const isAppHost = APP_HOST_ZONES.some(
       (zone) => u.hostname === zone || u.hostname.endsWith(`.${zone}`),
     );
     if (isAppHost) return u.pathname + u.search;
-    return value; // external host (CDN, etc.) — keep absolute
+    return value;
   } catch {
-    return value; // not a parseable URL — leave as-is
+    return value;
   }
 }
 
@@ -77,42 +65,59 @@ function buildHead(meta: AppMeta) {
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title },
       { name: "description", content: description },
-      { name: "author", content: "Higgsfield" },
+      { name: "theme-color", content: "#f3f2ed" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: ogImage ? "summary_large_image" : "summary" },
-      { name: "twitter:site", content: "@Higgsfield" },
       ...(ogImage
         ? [
             { property: "og:image", content: ogImage },
             { name: "twitter:image", content: ogImage },
           ]
         : []),
-      // Cover video (og:video) — the animated counterpart of og:image; the
-      // Higgsfield feed cards also play it on hover.
       ...(ogVideo ? [{ property: "og:video", content: ogVideo }] : []),
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      ...(favicon ? [{ rel: "icon", href: favicon }] : []),
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" as const },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+      },
+      ...(favicon
+        ? [{ rel: "icon", href: favicon }]
+        : [{ rel: "icon", href: "/assets/favicon-32.png" }]),
+      { rel: "apple-touch-icon", href: "/assets/apple-touch-icon.png" },
+      { rel: "manifest", href: "/assets/site.webmanifest" },
     ],
   };
 }
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-q-background-primary px-4">
-      <NotFound
-        className="mx-auto max-w-md"
-        icon={<span className="text-q-title-md-semi-bold text-q-text-primary">404</span>}
-        title="Page not found"
-        subtitle="The page you're looking for doesn't exist or has been moved."
-      >
-        <Link to="/" className={button({ variant: "primary", size: "md" }, "mt-3")}>
-          Go home
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-paper px-6 text-center">
+      <img
+        src="/assets/blueprint-plate.png"
+        alt=""
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70"
+      />
+      <div className="relative">
+        <p className="font-plex text-sm text-steel">404</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tighter text-ink md:text-6xl">
+          Nothing on this bench.
+        </h1>
+        <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink/70">
+          The page you asked for is not in the shop. Head back and pick another job.
+        </p>
+        <Link
+          to="/"
+          className="mt-8 inline-block bg-cobalt px-6 py-3 font-plex text-sm font-medium text-paper shadow-[4px_4px_0_#14181d] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#14181d]"
+        >
+          Back to the garage
         </Link>
-      </NotFound>
+      </div>
     </div>
   );
 }
@@ -125,23 +130,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-q-background-primary px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-paper px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-q-title-lg-semi-bold text-q-text-primary">This page didn't load</h1>
-        <p className="mt-2 text-q-body-sm-regular text-q-text-secondary">
-          Something went wrong on our end. You can try refreshing or head back home.
+        <h1 className="text-3xl font-bold tracking-tighter text-ink">This page did not load</h1>
+        <p className="mt-2 text-base leading-relaxed text-ink/70">
+          Something went wrong on our end. Try again or head back home.
         </p>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className={button({ variant: "primary", size: "md" })}
+            className="bg-ink px-5 py-2.5 font-plex text-sm text-paper transition-transform active:scale-[0.98]"
           >
             Try again
           </button>
-          <a href="/" className={button({ variant: "outline", size: "md" })}>
+          <a href="/" className="border border-ink/30 px-5 py-2.5 font-plex text-sm text-ink">
             Go home
           </a>
         </div>
@@ -151,8 +156,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  // Read the committed page metadata at build time (no runtime fetch).
   head: () => buildHead(appMeta),
+  loader: async () => {
+    const user = await currentUser();
+    return { user };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -161,14 +169,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="default-dark" style={{ colorScheme: "dark" }}>
-      {/* Marketplace apps are permanently dark: data-theme is pinned on <html>
-          above. Do not add quanta's bootstrapScript/ThemeController, a theme
-          toggle, or a light mode. */}
+    <html lang="en" style={{ colorScheme: "light" }}>
       <head>
         <HeadContent />
       </head>
-      <body className="bg-q-background-primary text-q-text-primary">
+      <body className="bg-paper text-ink antialiased">
         {children}
         <Scripts />
       </body>
@@ -200,8 +205,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <MotionRoot />
+      <SiteNav />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <SiteFooter />
     </QueryClientProvider>
   );
 }

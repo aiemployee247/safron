@@ -111,3 +111,78 @@
     border-color: var(--hf-color-border-default);
   }
 }
+
+/* ============================================================
+ * Agent Garage website theme (type: website, custom brand).
+ * Cobalt + cream shop-manual palette from app/design-brief.md.
+ * ============================================================ */
+
+@theme {
+  --color-paper: #f3f2ed;
+  --color-paper-deep: #e9e7df;
+  --color-ink: #14181d;
+  --color-cobalt: #2447c6;
+  --color-steel: #8a919c;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-plex: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    background-color: #f3f2ed;
+    color: #14181d;
+    color-scheme: light;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: #f3f2ed;
+    color: #14181d;
+    font-family: var(--font-display);
+  }
+
+  ::selection {
+    background-color: #2447c6;
+    color: #f3f2ed;
+  }
+}
+
+@layer components {
+  /* Faint blueprint grid, board background character. */
+  .blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgba(36, 71, 198, 0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(36, 71, 198, 0.055) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Hero headline build: fires on mount, never viewport-gated. */
+  .rise-in {
+    animation: ag-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .rise-in-late {
+    animation: ag-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  }
+  .rise-in-later {
+    animation: ag-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  }
+
+  @keyframes ag-rise {
+    from {
+      transform: translateY(22px);
+      opacity: 0.001;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise-in,
+    .rise-in-late,
+    .rise-in-later {
+      animation: none;
+    }
+  }
+}
