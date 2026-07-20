@@ -23,8 +23,9 @@ export const Route = createFileRoute("/tutorials/$slug")({
 });
 
 function TutorialPage() {
-  const { meta, blocks, locked, lockedReason } = Route.useLoaderData();
+  const { meta, blocks, locked, lockedReason, viewer } = Route.useLoaderData();
   const flagship = Boolean(meta.contents?.length);
+  const promptCount = blocks.filter((b) => b.kind === "prompt").length;
 
   return (
     <main className="px-4 py-14 md:px-6 md:py-20">
@@ -70,6 +71,16 @@ function TutorialPage() {
           <span className="inline-flex items-center gap-2 rounded-md border border-line-hi bg-panel px-2.5 py-1 font-plex text-[11px] uppercase tracking-wide text-ink-dim">
             {meta.minutes} min · {meta.level}
           </span>
+          {flagship ? (
+            <Link
+              to="/tutorials/$slug/install"
+              params={{ slug: meta.slug }}
+              className="inline-flex items-center gap-2 rounded-md border border-signal/40 bg-signal/10 px-2.5 py-1 font-plex text-[11px] uppercase tracking-wide text-signal hover:border-signal"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-signal text-signal glow-dot" />
+              Auto-installer
+            </Link>
+          ) : null}
           {meta.date ? (
             <span className="font-plex text-[11px] uppercase tracking-wide text-steel">
               {meta.date}
@@ -167,23 +178,51 @@ function TutorialPage() {
           </section>
         ) : null}
 
-        {/* Unlock / membership pitch */}
+        {/* Downloads + membership pitch */}
         {flagship ? (
           <section className="km-panel mt-8 p-6 md:p-8">
-            <h2 className="text-xl font-bold tracking-tight text-ink">
-              Unlock every build in the garage
-            </h2>
+            <h2 className="text-xl font-bold tracking-tight text-ink">Unlock the downloads</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-dim">
-              All-Access unlocks every tutorial, template, and member build on the platform —
-              and it&apos;s free while the garage is in beta.
+              All {promptCount} prompts as one .md file, plus the one-line auto-installer.
+              All-Access unlocks every tutorial, template, and download on the platform —
+              free while the garage is in beta.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
-              <Link to="/sign-up" className="btn-gold px-6 py-3 text-sm font-semibold">
-                Unlock All-Access — $10/mo
+              {viewer.allAccess ? (
+                <>
+                  <a
+                    href={`/tutorials/${meta.slug}/prompts.md`}
+                    className="btn-gold px-6 py-3 text-sm font-semibold"
+                  >
+                    Download all prompts (.md)
+                  </a>
+                  <Link
+                    to="/tutorials/$slug/install"
+                    params={{ slug: meta.slug }}
+                    className="btn-panel px-5 py-3 text-sm font-medium"
+                  >
+                    Open the auto-installer
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to={viewer.signedIn ? "/members" : "/sign-up"}
+                    className="btn-gold px-6 py-3 text-sm font-semibold"
+                  >
+                    Unlock All-Access — $10/mo
+                  </Link>
+                  <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-signal">
+                    Free during beta
+                  </span>
+                </>
+              )}
+              <Link
+                to="/services"
+                className="font-plex text-xs text-ink-dim underline underline-offset-4 hover:text-cobalt"
+              >
+                Or have us deploy this for you →
               </Link>
-              <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-signal">
-                Free during beta
-              </span>
             </div>
           </section>
         ) : null}

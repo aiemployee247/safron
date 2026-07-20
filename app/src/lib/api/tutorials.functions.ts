@@ -17,13 +17,14 @@ export const getTutorialContent = createServerFn({ method: "GET" })
     const blocks = tutorialBlocks[data.slug];
     if (!meta || !blocks) return null;
 
-    if (!meta.gated) {
-      return { meta, blocks, locked: false as const, lockedReason: null };
-    }
-
     const user = await getSessionUser();
-    if (user?.plan === "all-access") {
-      return { meta, blocks, locked: false as const, lockedReason: null };
+    const viewer = {
+      signedIn: Boolean(user),
+      allAccess: user?.plan === "all-access",
+    };
+
+    if (!meta.gated || viewer.allAccess) {
+      return { meta, blocks, locked: false as const, lockedReason: null, viewer };
     }
 
     return {
@@ -31,5 +32,6 @@ export const getTutorialContent = createServerFn({ method: "GET" })
       blocks: blocks.slice(0, PREVIEW_BLOCKS),
       locked: true as const,
       lockedReason: user ? ("upgrade" as const) : ("signin" as const),
+      viewer,
     };
   });

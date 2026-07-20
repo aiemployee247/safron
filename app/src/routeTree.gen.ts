@@ -19,6 +19,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TutorialsIndexRouteImport } from './routes/tutorials.index'
 import { Route as TutorialsSlugRouteImport } from './routes/tutorials.$slug'
+import { Route as InstallSlugRouteImport } from './routes/install.$slug'
+import { Route as TutorialsSlugPromptsDotmdRouteImport } from './routes/tutorials.$slug.prompts[.]md'
+import { Route as TutorialsSlugInstallRouteImport } from './routes/tutorials.$slug.install'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api.auth.google'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
 
@@ -72,6 +75,22 @@ const TutorialsSlugRoute = TutorialsSlugRouteImport.update({
   path: '/tutorials/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstallSlugRoute = InstallSlugRouteImport.update({
+  id: '/install/$slug',
+  path: '/install/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorialsSlugPromptsDotmdRoute =
+  TutorialsSlugPromptsDotmdRouteImport.update({
+    id: '/prompts.md',
+    path: '/prompts.md',
+    getParentRoute: () => TutorialsSlugRoute,
+  } as any)
+const TutorialsSlugInstallRoute = TutorialsSlugInstallRouteImport.update({
+  id: '/install',
+  path: '/install',
+  getParentRoute: () => TutorialsSlugRoute,
+} as any)
 const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
   id: '/api/auth/google',
   path: '/api/auth/google',
@@ -92,9 +111,12 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tutorials/$slug': typeof TutorialsSlugRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
+  '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -106,9 +128,12 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tutorials/$slug': typeof TutorialsSlugRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
+  '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesById {
@@ -121,9 +146,12 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/tutorials/$slug': typeof TutorialsSlugRoute
+  '/install/$slug': typeof InstallSlugRoute
+  '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
+  '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
@@ -137,9 +165,12 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
     | '/api/auth/google'
+    | '/tutorials/$slug/install'
+    | '/tutorials/$slug/prompts.md'
     | '/api/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,9 +182,12 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials'
     | '/api/auth/google'
+    | '/tutorials/$slug/install'
+    | '/tutorials/$slug/prompts.md'
     | '/api/auth/google/callback'
   id:
     | '__root__'
@@ -165,9 +199,12 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
     | '/api/auth/google'
+    | '/tutorials/$slug/install'
+    | '/tutorials/$slug/prompts.md'
     | '/api/auth/google/callback'
   fileRoutesById: FileRoutesById
 }
@@ -180,7 +217,8 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  TutorialsSlugRoute: typeof TutorialsSlugRoute
+  InstallSlugRoute: typeof InstallSlugRoute
+  TutorialsSlugRoute: typeof TutorialsSlugRouteWithChildren
   TutorialsIndexRoute: typeof TutorialsIndexRoute
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
 }
@@ -257,6 +295,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorialsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/install/$slug': {
+      id: '/install/$slug'
+      path: '/install/$slug'
+      fullPath: '/install/$slug'
+      preLoaderRoute: typeof InstallSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tutorials/$slug/prompts.md': {
+      id: '/tutorials/$slug/prompts.md'
+      path: '/prompts.md'
+      fullPath: '/tutorials/$slug/prompts.md'
+      preLoaderRoute: typeof TutorialsSlugPromptsDotmdRouteImport
+      parentRoute: typeof TutorialsSlugRoute
+    }
+    '/tutorials/$slug/install': {
+      id: '/tutorials/$slug/install'
+      path: '/install'
+      fullPath: '/tutorials/$slug/install'
+      preLoaderRoute: typeof TutorialsSlugInstallRouteImport
+      parentRoute: typeof TutorialsSlugRoute
+    }
     '/api/auth/google': {
       id: '/api/auth/google'
       path: '/api/auth/google'
@@ -273,6 +332,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface TutorialsSlugRouteChildren {
+  TutorialsSlugInstallRoute: typeof TutorialsSlugInstallRoute
+  TutorialsSlugPromptsDotmdRoute: typeof TutorialsSlugPromptsDotmdRoute
+}
+
+const TutorialsSlugRouteChildren: TutorialsSlugRouteChildren = {
+  TutorialsSlugInstallRoute: TutorialsSlugInstallRoute,
+  TutorialsSlugPromptsDotmdRoute: TutorialsSlugPromptsDotmdRoute,
+}
+
+const TutorialsSlugRouteWithChildren = TutorialsSlugRoute._addFileChildren(
+  TutorialsSlugRouteChildren,
+)
 
 interface ApiAuthGoogleRouteChildren {
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
@@ -295,7 +368,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  TutorialsSlugRoute: TutorialsSlugRoute,
+  InstallSlugRoute: InstallSlugRoute,
+  TutorialsSlugRoute: TutorialsSlugRouteWithChildren,
   TutorialsIndexRoute: TutorialsIndexRoute,
   ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
 }

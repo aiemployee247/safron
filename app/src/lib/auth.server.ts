@@ -88,11 +88,9 @@ export async function createSession(userId: string): Promise<void> {
   });
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+async function userForToken(token: string): Promise<SessionUser | null> {
   const { DB } = bindings();
   if (!DB) return null;
-  const token = getCookie(SESSION_COOKIE);
-  if (!token) return null;
   const tokenHash = await sha256Hex(token);
   const row = await DB.prepare(
     `SELECT u.id, u.email, u.name, u.plan FROM sessions s
@@ -102,6 +100,27 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     .bind(tokenHash)
     .first<SessionUser>();
   return row ?? null;
+}
+
+export async function getSessionUser(): Promise<SessionUser | null> {
+  const token = getCookie(SESSION_COOKIE);
+  if (!token) return null;
+  return userForToken(token);
+}
+
+// For raw server-route handlers where the cookie helpers may not apply:
+// resolves the session directly from the incoming Request.
+export async function getSessionUserFromRequest(
+  request: Request,
+): Promise<SessionUser | null> {
+  const raw = request.headers.get("Cookie") ?? "";
+  let token: string | null = null;
+  for (const part of raw.split(";")) {
+    const [name, ...rest] = part.trim().split("=");
+    if (name === SESSION_COOKIE) token = rest.join("=");
+  }
+  if (!token) return null;
+  return userForToken(token);
 }
 
 export async function destroySession(): Promise<void> {
