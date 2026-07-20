@@ -87,6 +87,11 @@ function TutorialRow({ t, index }: { t: Tutorial; index: number }) {
           <span className="font-plex text-[11px] uppercase tracking-[0.2em] text-cobalt">
             {t.track}
           </span>
+          {t.date ? (
+            <span className="font-plex text-[11px] uppercase tracking-wide text-steel">
+              {t.date}
+            </span>
+          ) : null}
           {t.gated ? (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-cobalt/40 bg-cobalt/10 px-2 py-0.5 font-plex text-[11px] uppercase tracking-wide text-cobalt">
               All-Access

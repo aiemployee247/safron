@@ -6,7 +6,15 @@ export type TutorialBlock =
   | { kind: "p"; text: string }
   | { kind: "h2"; text: string }
   | { kind: "code"; lang: string; label: string; code: string }
-  | { kind: "note"; text: string };
+  | { kind: "note"; text: string }
+  // Section divider: "PART 0X / 0Y — TITLE" with a one-line blurb.
+  | { kind: "part"; num: number; total: number; title: string; blurb: string }
+  // Copy-paste prompt card: paste into Claude Code / your agent verbatim.
+  | { kind: "prompt"; num: string; title: string; text: string }
+  | { kind: "image"; src: string; caption: string }
+  | { kind: "video"; youtubeId: string };
+
+export type TutorialContents = { part: string; steps: string[] };
 
 export type Tutorial = {
   slug: string;
@@ -17,6 +25,12 @@ export type Tutorial = {
   level: "Beginner" | "Intermediate" | "Advanced";
   gated: boolean;
   cover: string;
+  /* Flagship-format extras (all optional; plain tutorials skip them). */
+  date?: string;
+  builders?: string;
+  videoId?: string;
+  prereqs?: string[];
+  contents?: TutorialContents[];
 };
 
 export const tutorials: Tutorial[] = [
@@ -32,13 +46,44 @@ export const tutorials: Tutorial[] = [
   },
   {
     slug: "telegram-ops-bot",
-    title: "Telegram Ops Bot",
-    deck: "A bot that watches your server, answers questions about it in plain language, and restarts things when you tell it to.",
+    title: "Build a Telegram Ops Bot — Server Health, Safe Restarts & Alerts from Your Pocket",
+    deck: "A bot that watches your server, answers questions about it in plain language, and restarts things when you tell it to. 7 copy-paste prompts.",
     track: "Automation",
     minutes: 60,
     level: "Intermediate",
     gated: false,
     cover: "/assets/tutorial-telegram.png",
+    date: "Jul 2026",
+    builders: "1.4k",
+    prereqs: [
+      "Any Linux server you can SSH into — a $5 VPS is fine",
+      "Node 20 or newer installed on the server",
+      "A Telegram account",
+      "Claude Code (or another coding agent) on the server",
+      "About an hour of focused setup time",
+    ],
+    contents: [
+      {
+        part: "Part 01 / 03 — Foundation — the bot & its owner lock",
+        steps: [
+          "Create the bot with BotFather",
+          "Scaffold the project",
+          "Lock the bot to your user id",
+        ],
+      },
+      {
+        part: "Part 02 / 03 — Health reports & safe restarts",
+        steps: [
+          "The /status health report",
+          "Whitelist the services it may touch",
+          "Confirm-to-restart with one tap",
+        ],
+      },
+      {
+        part: "Part 03 / 03 — Run forever + troubleshooting",
+        steps: ["Install it as a systemd service", "Troubleshooting prompts"],
+      },
+    ],
   },
   {
     slug: "homelab-llm",

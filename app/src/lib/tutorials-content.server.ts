@@ -65,25 +65,52 @@ export const tutorialBlocks: Record<string, TutorialBlock[]> = {
   "telegram-ops-bot": [
     {
       kind: "p",
-      text: "You will build a Telegram bot that lives on your server. Ask it how the box is doing and it answers with real numbers. Tell it to restart a service and it does, after asking you to confirm.",
+      text: "You will build a Telegram bot that lives on your server. Ask it how the box is doing and it answers with real numbers. Tell it to restart a service and it does, after asking you to confirm. The build is driven by copy-paste prompts: each one goes into Claude Code running on your server, and after each prompt you run a quick verification so you know the step actually landed.",
     },
-    { kind: "h2", text: "What you need" },
     {
-      kind: "p",
-      text: "Any Linux server you can SSH into, Node 20, and a Telegram account. About an hour end to end.",
+      kind: "part",
+      num: 1,
+      total: 3,
+      title: "Foundation — the bot & its owner lock",
+      blurb:
+        "Register the bot with Telegram, scaffold the project, and hard-lock it so it answers you and nobody else.",
     },
-    { kind: "h2", text: "1. Create the bot" },
+    { kind: "h2", text: "1. Create the bot with BotFather" },
     {
       kind: "p",
       text: "Message @BotFather on Telegram, send /newbot, pick a name, and copy the token it gives you. Also message @userinfobot to get your numeric user id: the bot must only obey you.",
     },
     {
+      kind: "prompt",
+      num: "1",
+      title: "Scaffold the ops bot",
+      text: "Create a new Node project in /opt/ops-bot for a Telegram ops bot.\n\n- Use the grammy library for Telegram, systeminformation for metrics, and dotenv for config.\n- Create a .env file with two placeholders: BOT_TOKEN and OWNER_ID.\n- In bot.js, add a middleware FIRST that drops any update where ctx.from.id does not\n  equal OWNER_ID. No reply, no error — silently ignore strangers.\n- Add a /ping command that replies \"on the bench\" so I can verify the owner lock.\n\nDon't add any other commands yet. Show me the file tree when you're done.",
+    },
+    {
       kind: "code",
       lang: "bash",
-      label: "terminal",
-      code: "mkdir ops-bot && cd ops-bot\nnpm init -y\nnpm install grammy systeminformation dotenv",
+      label: "verify — only YOU get a reply",
+      code: "cd /opt/ops-bot\nnode bot.js\n# in Telegram: send /ping  ->  \"on the bench\"\n# from a second account: send /ping  ->  silence",
+    },
+    {
+      kind: "part",
+      num: 2,
+      total: 3,
+      title: "Health reports & safe restarts",
+      blurb:
+        "A /status command with real numbers, a whitelist of services the bot may touch, and a confirmation tap before anything restarts.",
     },
     { kind: "h2", text: "2. Report system health" },
+    {
+      kind: "prompt",
+      num: "2",
+      title: "Add the /status health report",
+      text: "Add a /status command to bot.js.\n\nIt should report, in one short message: CPU load percentage, memory used percentage,\nand disk used percentage for the root filesystem — using the systeminformation\nlibrary, no shelling out. Keep the reply format to three lines, lowercase, like:\n\ncpu 12%\nmem 48%\ndisk 61%\n\nNo emoji, no headers, no extra prose.",
+    },
+    {
+      kind: "p",
+      text: "The generated command should look close to this — read it before you trust it:",
+    },
     {
       kind: "code",
       lang: "js",
@@ -96,21 +123,54 @@ export const tutorialBlocks: Record<string, TutorialBlock[]> = {
       text: "Never let a chat message run arbitrary shell. Whitelist the exact services the bot may touch and require a confirmation tap.",
     },
     {
+      kind: "prompt",
+      num: "3",
+      title: "Safe restarts with a confirmation tap",
+      text: "Add a /restart command to bot.js.\n\n- Define a SERVICES whitelist constant: [\"nginx\", \"ops-bot\", \"postgresql\"].\n- /restart <name>: if the name is not in the whitelist, reply with the list of\n  allowed services and do nothing else.\n- If it IS whitelisted, do NOT restart yet. Reply with an inline keyboard with a\n  single button: \"Yes, restart <name>\". Only when I tap that button, run\n  `sudo systemctl restart <name>` via execFile (never a shell string), and reply\n  with the outcome.\n- Under no circumstances accept a service name that isn't in the whitelist,\n  even via the callback data.\n\nAfter you're done, explain in two sentences how the callback data is validated.",
+    },
+    {
       kind: "code",
       lang: "js",
       label: "bot.js (continued)",
       code: 'import { execFile } from "node:child_process";\nimport { InlineKeyboard } from "grammy";\n\nconst SERVICES = ["nginx", "ops-bot", "postgresql"];\n\nbot.command("restart", async (ctx) => {\n  const name = ctx.match?.trim();\n  if (!SERVICES.includes(name)) {\n    return ctx.reply(`I can restart: ${SERVICES.join(", ")}`);\n  }\n  const kb = new InlineKeyboard().text(`Yes, restart ${name}`, `go:${name}`);\n  await ctx.reply(`Restart ${name}?`, { reply_markup: kb });\n});\n\nbot.callbackQuery(/go:(.+)/, async (ctx) => {\n  const name = ctx.match[1];\n  execFile("sudo", ["systemctl", "restart", name], (err) => {\n    ctx.reply(err ? `Failed: ${err.message}` : `${name} restarted.`);\n  });\n  await ctx.answerCallbackQuery();\n});',
     },
+    {
+      kind: "part",
+      num: 3,
+      total: 3,
+      title: "Run forever + troubleshooting",
+      blurb:
+        "Turn the script into a systemd service that survives reboots, then keep two troubleshooting prompts on hand for when Telegram goes quiet.",
+    },
     { kind: "h2", text: "4. Keep it alive" },
+    {
+      kind: "prompt",
+      num: "4",
+      title: "Install it as a systemd service",
+      text: "Create a systemd unit for the ops bot.\n\n- Unit file at /etc/systemd/system/ops-bot.service.\n- Runs /opt/ops-bot/bot.js with node, as the `ops` user (create the user if it\n  doesn't exist, no login shell), Restart=always, EnvironmentFile pointing at\n  /opt/ops-bot/.env.\n- Give the `ops` user sudo rights for `systemctl restart` on ONLY the three\n  whitelisted services, via a drop-in in /etc/sudoers.d/ — nothing broader.\n- Enable and start the service, then show me its status.",
+    },
     {
       kind: "code",
       lang: "bash",
-      label: "/etc/systemd/system/ops-bot.service",
-      code: "[Unit]\nDescription=Telegram ops bot\nAfter=network.target\n\n[Service]\nExecStart=/usr/bin/node /opt/ops-bot/bot.js\nRestart=always\nUser=ops\nEnvironmentFile=/opt/ops-bot/.env\n\n[Install]\nWantedBy=multi-user.target",
+      label: "verify — the unit is live",
+      code: "systemctl status ops-bot --no-pager\n# expect: active (running)\nsudo reboot\n# after the box is back: /ping from Telegram still answers",
+    },
+    { kind: "h2", text: "Troubleshooting" },
+    {
+      kind: "prompt",
+      num: "T1",
+      title: "The bot stopped answering",
+      text: "My Telegram ops bot has stopped replying. Diagnose it end to end:\n\n1. Check `systemctl status ops-bot` and the last 50 journal lines.\n2. Confirm the BOT_TOKEN in /opt/ops-bot/.env still matches what BotFather shows.\n3. Check outbound connectivity to api.telegram.org from this box.\n4. If the process is crash-looping, show me the exact error and propose a fix —\n   but don't apply it until I confirm.",
+    },
+    {
+      kind: "prompt",
+      num: "T2",
+      title: "Restarts fail with a permissions error",
+      text: "The /restart command replies \"Failed\" with a permissions error. Check that the\n`ops` user's sudoers drop-in covers exactly the whitelisted services, that the\nfile mode is 0440, and that `sudo -l -U ops` lists the three systemctl restart\ncommands. Show me what's wrong before changing anything.",
     },
     {
       kind: "note",
-      text: "Enable it with systemctl enable --now ops-bot. The members version adds log tailing, disk alerts that message you first, and a weekly health digest.",
+      text: "That's the whole build: a locked-down bot, honest health numbers, guarded restarts, and a service that outlives reboots. The members version adds log tailing, disk alerts that message you first, and a weekly health digest.",
     },
   ],
 
