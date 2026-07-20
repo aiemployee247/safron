@@ -25,7 +25,6 @@ import { Route as TutorialsSlugPromptsDotmdRouteImport } from './routes/tutorial
 import { Route as TutorialsSlugBundleDotzipRouteImport } from './routes/tutorials.$slug.bundle[.]zip'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe.webhook'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api.auth.google'
-import { Route as ApiAdminDowngradeRouteImport } from './routes/api.admin.downgrade'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -110,11 +109,6 @@ const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
   path: '/api/auth/google',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminDowngradeRoute = ApiAdminDowngradeRouteImport.update({
-  id: '/api/admin/downgrade',
-  path: '/api/admin/downgrade',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -133,7 +127,6 @@ export interface FileRoutesByFullPath {
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
-  '/api/admin/downgrade': typeof ApiAdminDowngradeRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
@@ -153,7 +146,6 @@ export interface FileRoutesByTo {
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials': typeof TutorialsIndexRoute
-  '/api/admin/downgrade': typeof ApiAdminDowngradeRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
@@ -174,7 +166,6 @@ export interface FileRoutesById {
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
-  '/api/admin/downgrade': typeof ApiAdminDowngradeRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
@@ -196,7 +187,6 @@ export interface FileRouteTypes {
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
-    | '/api/admin/downgrade'
     | '/api/auth/google'
     | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
@@ -216,7 +206,6 @@ export interface FileRouteTypes {
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials'
-    | '/api/admin/downgrade'
     | '/api/auth/google'
     | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
@@ -236,7 +225,6 @@ export interface FileRouteTypes {
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
-    | '/api/admin/downgrade'
     | '/api/auth/google'
     | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
@@ -257,7 +245,6 @@ export interface RootRouteChildren {
   InstallSlugRoute: typeof InstallSlugRoute
   TutorialsSlugRoute: typeof TutorialsSlugRouteWithChildren
   TutorialsIndexRoute: typeof TutorialsIndexRoute
-  ApiAdminDowngradeRoute: typeof ApiAdminDowngradeRoute
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   TutorialsSlugInstallRoute: typeof TutorialsSlugInstallRoute
@@ -377,13 +364,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthGoogleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/downgrade': {
-      id: '/api/admin/downgrade'
-      path: '/api/admin/downgrade'
-      fullPath: '/api/admin/downgrade'
-      preLoaderRoute: typeof ApiAdminDowngradeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/google/callback': {
       id: '/api/auth/google/callback'
       path: '/callback'
@@ -432,7 +412,6 @@ const rootRouteChildren: RootRouteChildren = {
   InstallSlugRoute: InstallSlugRoute,
   TutorialsSlugRoute: TutorialsSlugRouteWithChildren,
   TutorialsIndexRoute: TutorialsIndexRoute,
-  ApiAdminDowngradeRoute: ApiAdminDowngradeRoute,
   ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   TutorialsSlugInstallRoute: TutorialsSlugInstallRoute,
