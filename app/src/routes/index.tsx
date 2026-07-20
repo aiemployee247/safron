@@ -121,18 +121,21 @@ function Hero() {
       <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-paper via-paper/70 to-transparent md:w-3/4" />
 
       <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-6xl px-4 pb-16 md:px-6 md:pb-20">
-        <h1 className="rise-in max-w-xl text-5xl font-extrabold leading-none tracking-tighter text-ink md:text-7xl">
-          Build agents that actually run.
+        <p className="rise-in flex items-center gap-3 font-plex text-xs uppercase tracking-[0.28em] text-cobalt">
+          <span className="h-px w-8 bg-cobalt" aria-hidden="true" />
+          AI &amp; Automation Tutorials
+        </p>
+        <h1 className="rise-in mt-4 max-w-xl text-5xl font-extrabold leading-none tracking-tighter text-ink md:text-7xl">
+          Build agents that <span className="text-cobalt">actually run.</span>
         </h1>
-        <p className="rise-in-late mt-5 max-w-md text-base leading-relaxed text-ink/75">
+        <p className="rise-in-late mt-5 max-w-md text-base leading-relaxed text-ink-dim">
           Step-by-step builds with copy-paste commands. Every tutorial ends with something
           working.
         </p>
         <div className="rise-in-later mt-8 flex flex-wrap items-center gap-6">
-          {/* Stamp/press garment: hard ink offset shadow, imprints on press. */}
           <Link
             to="/sign-up"
-            className="bg-cobalt px-7 py-3.5 text-base font-semibold text-paper shadow-[5px_5px_0_#14181d] transition-all duration-150 hover:shadow-[7px_7px_0_#14181d] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#14181d] motion-reduce:transition-none"
+            className="btn-gold px-7 py-3.5 text-base font-semibold"
           >
             Start learning
           </Link>
@@ -155,19 +158,23 @@ function OnTheBench() {
   const [big, second, third, fourth] = tutorials;
 
   return (
-    <section className="blueprint-grid border-t border-ink/15 px-4 py-20 md:px-6 md:py-28">
+    <section className="blueprint-grid border-t border-line/60 px-4 py-20 md:px-6 md:py-28">
       <div className="mx-auto max-w-6xl">
-        <p className="font-plex text-xs font-medium uppercase tracking-[0.2em] text-cobalt">
+        <p className="flex items-center gap-3 font-plex text-xs font-medium uppercase tracking-[0.28em] text-cobalt">
           Tutorials
+          <span className="h-px w-10 bg-cobalt/60" aria-hidden="true" />
         </p>
         <h2 className="mt-3 text-4xl font-bold tracking-tighter text-ink md:text-6xl">
           On the bench
         </h2>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70">
+        <p className="mt-4 max-w-md text-base leading-relaxed text-ink-dim">
           Guides and build notes for people who like to understand every detail.
         </p>
 
-        <div ref={gridRef} className="mt-12 grid border border-ink/25 md:grid-cols-12">
+        <div
+          ref={gridRef}
+          className="mt-12 grid overflow-hidden rounded-2xl border border-line bg-surface/60 md:grid-cols-12"
+        >
           <BenchCell t={big} className="md:col-span-5 md:row-span-2 md:border-r" large />
           <BenchCell t={second} className="border-t md:col-span-4 md:border-r md:border-t-0" />
           <BenchCell t={fourth} className="border-t md:col-span-3 md:row-span-2 md:border-t-0" tall />
@@ -202,9 +209,10 @@ function BenchCell({
     <Link
       to="/tutorials/$slug"
       params={{ slug: t.slug }}
-      className={`group flex flex-col border-ink/25 bg-paper p-6 transition-colors hover:bg-paper-deep md:p-7 ${className}`}
+      className={`group flex flex-col border-line bg-transparent p-6 transition-colors hover:bg-panel md:p-7 ${className}`}
     >
-      <span className="inline-flex w-fit border border-ink/40 px-2 py-0.5 font-plex text-[11px] uppercase tracking-wide text-ink/70">
+      <span className="inline-flex w-fit items-center gap-2 rounded-md border border-line-hi bg-panel px-2 py-0.5 font-plex text-[11px] uppercase tracking-wide text-ink-dim">
+        <span className="h-1.5 w-1.5 rounded-full bg-cobalt" aria-hidden="true" />
         {t.track}
       </span>
       <h3
@@ -212,7 +220,7 @@ function BenchCell({
       >
         {t.title}
       </h3>
-      <p className="mt-2 font-plex text-xs leading-relaxed text-ink/60">{t.deck}</p>
+      <p className="mt-2 font-plex text-xs leading-relaxed text-steel">{t.deck}</p>
       <img
         src={t.cover}
         alt={`Technical illustration for ${t.title}`}
@@ -261,13 +269,13 @@ function Tracks() {
   const [active, setActive] = useState(1);
 
   return (
-    <section className="border-t border-ink/15 px-4 py-20 md:px-6 md:py-28">
+    <section className="border-t border-line/60 px-4 py-20 md:px-6 md:py-28">
       <div className="mx-auto max-w-6xl">
         <h2 className="mx-auto max-w-xl text-center text-4xl font-bold tracking-tighter text-ink md:text-6xl">
-          Three tracks. One garage.
+          Three tracks. <span className="text-cobalt">One garage.</span>
         </h2>
 
-        <div className="mt-14 flex flex-col gap-0 border border-ink/25 md:h-[460px] md:flex-row">
+        <div className="mt-14 flex flex-col gap-0 overflow-hidden rounded-2xl border border-line bg-surface/60 md:h-[460px] md:flex-row">
           {tracks.map((tr, i) => {
             const expanded = active === i;
             return (
@@ -275,7 +283,7 @@ function Tracks() {
                 key={tr.key}
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
-                className={`relative overflow-hidden border-ink/25 transition-all duration-500 ease-out motion-reduce:transition-none max-md:border-b max-md:last:border-b-0 md:border-r md:last:border-r-0 ${
+                className={`relative overflow-hidden border-line transition-all duration-500 ease-out motion-reduce:transition-none max-md:border-b max-md:last:border-b-0 md:border-r md:last:border-r-0 ${
                   expanded ? "max-md:min-h-80 md:flex-[3]" : "max-md:min-h-16 md:flex-1"
                 }`}
               >
@@ -305,7 +313,7 @@ function Tracks() {
                     className="flex h-full w-full items-center justify-center p-4 max-md:justify-start"
                     aria-label={`Show the ${tr.label} track`}
                   >
-                    <span className="flex items-center gap-3 font-plex text-sm uppercase tracking-[0.2em] text-ink/70 md:rotate-180 md:[writing-mode:vertical-rl]">
+                    <span className="flex items-center gap-3 font-plex text-sm uppercase tracking-[0.2em] text-ink-dim md:rotate-180 md:[writing-mode:vertical-rl]">
                       {tr.label}
                       <span className="h-px w-8 bg-cobalt md:h-8 md:w-px" />
                     </span>
@@ -349,20 +357,22 @@ const serviceRows = [
 
 function Services() {
   return (
-    <section className="border-t border-ink/15 px-4 py-20 md:px-6 md:py-28">
+    <section className="border-t border-line/60 px-4 py-20 md:px-6 md:py-28">
       <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-12">
         <div className="md:col-span-8">
           <h2 className="ml-0 max-w-lg text-4xl font-bold tracking-tighter text-ink md:ml-16 md:text-6xl">
             Bring your build in.
           </h2>
-          <div className="mt-10 border-t border-ink/25">
+          <div className="mt-10 border-t border-line">
             {serviceRows.map((s) => (
               <Link
                 key={s.name}
                 to="/services"
-                className="group grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1 border-b border-ink/25 py-6 transition-colors hover:bg-paper-deep md:grid-cols-[40px_1fr_auto_auto] md:gap-x-8"
+                className="group grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1 border-b border-line py-6 transition-colors hover:bg-panel md:grid-cols-[48px_1fr_auto_auto] md:gap-x-8"
               >
-                <img src={s.icon} alt="" className="h-8 w-8 mix-blend-multiply" />
+                <span className="icon-tile h-10 w-10">
+                  <img src={s.icon} alt="" className="h-7 w-7 mix-blend-multiply" />
+                </span>
                 <span className="text-2xl font-bold tracking-tight text-ink md:text-3xl">
                   {s.name}
                 </span>
@@ -372,7 +382,7 @@ function Services() {
                 <span className="col-start-2 text-lg font-semibold text-cobalt md:col-start-4 md:text-xl">
                   {s.price}
                 </span>
-                <span className="col-span-2 mt-1 max-w-md text-sm leading-relaxed text-ink/65 md:col-span-4">
+                <span className="col-span-2 mt-1 max-w-md text-sm leading-relaxed text-ink-dim md:col-span-4">
                   {s.line}
                 </span>
               </Link>
@@ -385,7 +395,7 @@ function Services() {
           <img
             src="/assets/services-hands.png"
             alt="Hands at a workshop keyboard surrounded by precision tools"
-            className="w-full object-cover"
+            className="w-full rounded-2xl border border-line object-cover"
           />
           {/* Viewfinder garment: corner brackets close around the label on hover. */}
           <Link
@@ -417,23 +427,23 @@ function Membership() {
   useScrollLift(panelRef, 32);
 
   return (
-    <section className="relative border-t border-ink/15">
+    <section className="relative border-t border-line/60">
       <div className="mx-auto grid max-w-6xl gap-0 md:grid-cols-12">
         <div className="px-4 py-20 md:col-span-9 md:px-6 md:py-28">
           <div className="text-center md:pr-8">
-            <p className="font-plex text-xs font-medium uppercase tracking-[0.2em] text-cobalt">
+            <p className="font-plex text-xs font-medium uppercase tracking-[0.28em] text-cobalt">
               Membership
             </p>
             <h2 className="mt-3 text-4xl font-bold tracking-tighter text-ink md:text-6xl">
               The toolbox
             </h2>
-            <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink/70">
+            <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink-dim">
               Everything in the garage, for less than a set of hex keys.
             </p>
           </div>
 
-          <div ref={panelRef} className="mt-12 grid gap-10 md:grid-cols-2 md:gap-0">
-            <div className="md:border-r md:border-ink/25 md:pr-10">
+          <div ref={panelRef} className="km-panel mt-12 grid gap-10 p-8 md:grid-cols-2 md:gap-0 md:p-10">
+            <div className="md:border-r md:border-line md:pr-10">
               <h3 className="text-3xl font-bold tracking-tight text-ink">Free</h3>
               <ul className="mt-6 space-y-4">
                 <PerkRow icon="/assets/icons/icon-book.png" text="Open tutorials, start to finish" />
@@ -468,13 +478,13 @@ function Membership() {
           {/* Band garment: the whole strip shifts and the arrow travels. */}
           <Link
             to="/sign-up"
-            className="group mt-12 flex items-center justify-between bg-cobalt px-6 py-5 text-paper transition-transform duration-300 hover:-translate-y-1 motion-reduce:transition-none md:px-8"
+            className="btn-gold group mt-12 flex items-center justify-between px-6 py-5 transition-transform duration-300 hover:-translate-y-1 motion-reduce:transition-none md:px-8"
           >
             <span className="text-xl font-semibold tracking-tight md:text-2xl">
               Unlock All-Access
             </span>
             <span className="flex items-center gap-3">
-              <span className="hidden h-px w-16 bg-paper/60 transition-all duration-300 group-hover:w-24 motion-reduce:transition-none md:block" />
+              <span className="hidden h-px w-16 bg-paper/40 transition-all duration-300 group-hover:w-24 motion-reduce:transition-none md:block" />
               <svg viewBox="0 0 20 12" aria-hidden="true" className="h-4 w-6">
                 <path
                   d="M1 6h16m0 0-5-5m5 5-5 5"
@@ -502,7 +512,9 @@ function Membership() {
 function PerkRow({ icon, text }: { icon: string; text: string }) {
   return (
     <li className="flex items-start gap-3">
-      <img src={icon} alt="" className="mt-0.5 h-6 w-6 mix-blend-multiply" />
+      <span className="icon-tile mt-0.5 h-8 w-8 shrink-0">
+        <img src={icon} alt="" className="h-6 w-6 mix-blend-multiply" />
+      </span>
       <span className="text-base leading-relaxed text-ink/80">{text}</span>
     </li>
   );

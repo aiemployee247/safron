@@ -4,16 +4,11 @@
 export function GoogleSignInButton({ label }: { label: string }) {
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <span className="h-px flex-1 bg-ink/20" aria-hidden />
-        <span className="font-plex text-xs uppercase tracking-wide text-steel">or</span>
-        <span className="h-px flex-1 bg-ink/20" aria-hidden />
-      </div>
       <a
         href="/api/auth/google"
-        className="mt-5 flex w-full items-center justify-center gap-3 border border-ink bg-paper px-7 py-3.5 text-base font-semibold text-ink shadow-[5px_5px_0_#14181d] transition-all duration-150 active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#14181d] motion-reduce:transition-none"
+        className="btn-panel flex w-full items-center justify-center gap-3 px-7 py-3.5 font-plex text-sm font-semibold uppercase tracking-[0.12em]"
       >
-        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden focusable="false">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden focusable="false">
           <path
             fill="#EA4335"
             d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -33,6 +28,13 @@ export function GoogleSignInButton({ label }: { label: string }) {
         </svg>
         {label}
       </a>
+      <div className="mt-5 flex items-center gap-4">
+        <span className="hairline flex-1" aria-hidden />
+        <span className="font-plex text-[10px] uppercase tracking-[0.3em] text-steel">
+          or email
+        </span>
+        <span className="hairline flex-1" aria-hidden />
+      </div>
     </div>
   )
 }

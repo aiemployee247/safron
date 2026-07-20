@@ -34,21 +34,26 @@ export function SiteFooter() {
 
   return (
     <footer>
-      <div className="bg-ink px-4 py-20 text-paper md:py-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl font-bold tracking-tighter md:text-6xl">Shop notes, weekly.</h2>
-          <p className="mx-auto mt-4 max-w-xl font-plex text-sm leading-relaxed text-paper/70">
+      <div className="blueprint-grid border-t border-line/60 px-4 py-20 md:py-28">
+        <div className="km-panel mx-auto max-w-3xl px-6 py-12 text-center md:px-12 md:py-16">
+          <p className="font-plex text-[10px] uppercase tracking-[0.28em] text-cobalt">
+            Transmission · Weekly
+          </p>
+          <h2 className="mt-3 text-4xl font-bold tracking-tighter text-ink md:text-6xl">
+            Shop notes, weekly.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl font-plex text-sm leading-relaxed text-ink-dim">
             One working build in your inbox every week. No fluff.
           </p>
 
           {state === "done" ? (
-            <p className="mx-auto mt-8 inline-block border border-paper/30 px-6 py-4 font-plex text-sm text-paper">
+            <p className="mx-auto mt-8 inline-block rounded-xl border border-signal/40 bg-signal/10 px-6 py-4 font-plex text-sm text-signal">
               You are on the list. First note lands this week.
             </p>
           ) : (
             <form
               onSubmit={onSubmit}
-              className="mx-auto mt-8 flex max-w-xl border border-paper/40 p-1.5 focus-within:border-cobalt"
+              className="mx-auto mt-8 flex max-w-xl gap-2 rounded-2xl border border-line bg-surface p-1.5 focus-within:border-cobalt"
             >
               <label htmlFor="footer-email" className="sr-only">
                 Email address
@@ -59,52 +64,51 @@ export function SiteFooter() {
                 type="email"
                 required
                 placeholder="you@example.com"
-                className="min-w-0 flex-1 border border-transparent bg-transparent px-4 py-3 font-plex text-sm text-paper placeholder:text-paper/40 focus:border-cobalt focus:outline-none"
+                className="min-w-0 flex-1 border border-transparent bg-transparent px-4 py-3 font-plex text-sm text-ink placeholder:text-steel focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={state === "busy"}
-                className="shrink-0 bg-paper px-6 py-3 font-plex text-sm font-medium text-ink transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="btn-gold shrink-0 px-6 py-3 font-plex text-sm font-semibold disabled:opacity-60"
               >
                 {state === "busy" ? "Adding you" : "Subscribe"}
               </button>
             </form>
           )}
           {state === "error" ? (
-            <p className="mt-3 font-plex text-xs text-paper/70">{error}</p>
+            <p className="mt-3 font-plex text-xs text-coral">{error}</p>
           ) : null}
         </div>
       </div>
 
-      <div className="border-t border-ink/10 bg-paper px-4 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-plex text-sm text-ink/70">
+      <div className="border-t border-line/60 bg-surface px-4 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6">
+          <div className="flex items-center gap-3 text-ink">
+            <HexMark className="h-8 w-8 text-cobalt" />
+            <span className="font-plex text-sm font-semibold tracking-[0.12em]">
+              AGENT <span className="text-cobalt">GARAGE</span>
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-plex text-sm text-ink-dim">
+            <Link to="/" className="hover:text-ink">
+              Home
+            </Link>
             <Link to="/tutorials" className="hover:text-ink">
               Tutorials
             </Link>
-            <span aria-hidden="true" className="text-ink/25">
-              |
-            </span>
             <Link to="/services" className="hover:text-ink">
-              Services
+              Book a Session
             </Link>
-            <span aria-hidden="true" className="text-ink/25">
-              |
-            </span>
             <Link to="/contact" className="hover:text-ink">
               Contact
             </Link>
-            <span aria-hidden="true" className="text-ink/25">
-              |
-            </span>
             <Link to={user ? "/members" : "/sign-in"} className="hover:text-ink">
               {user ? "Members" : "Sign in"}
             </Link>
           </div>
-          <div className="flex items-center gap-3 text-ink">
-            <HexMark className="h-8 w-8" />
-            <span className="font-plex text-xs text-ink/50">Agent Garage</span>
-          </div>
+          <p className="font-plex text-[10px] uppercase tracking-[0.25em] text-steel">
+            Build agents that actually run
+          </p>
         </div>
       </div>
     </footer>

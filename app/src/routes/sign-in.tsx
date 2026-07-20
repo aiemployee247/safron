@@ -22,6 +22,24 @@ export const Route = createFileRoute("/sign-in")({
   component: SignInPage,
 });
 
+const benefits = [
+  {
+    icon: "/assets/icons/icon-cap.png",
+    title: "All-Access membership",
+    line: "One $10/mo membership unlocks every tutorial in the library, including member builds.",
+  },
+  {
+    icon: "/assets/icons/icon-chip.png",
+    title: "Templates & source code",
+    line: "Grab any build's project templates and working source the moment you need them.",
+  },
+  {
+    icon: "/assets/icons/icon-envelope.png",
+    title: "Member Q&A",
+    line: "Every new build we ship is automatically part of your membership. Ask about your own.",
+  },
+] as const;
+
 function SignInPage() {
   const { googleEnabled } = Route.useLoaderData();
   const { error: searchError } = Route.useSearch();
@@ -61,106 +79,133 @@ function SignInPage() {
   }
 
   return (
-    <main className="blueprint-grid px-4 py-16 md:px-6 md:py-24">
-      <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2 md:gap-16">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tighter text-ink md:text-5xl">
-            Sign in to unlock the full library.
-          </h1>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70">
-            Your account is how the garage delivers your tutorials, templates, and All-Access
-            membership, on any device.
-          </p>
+    <main className="blueprint-grid px-4 py-14 md:px-6 md:py-20">
+      <div className="mx-auto max-w-xl">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 font-plex text-xs uppercase tracking-wide text-steel hover:text-ink"
+        >
+          <svg viewBox="0 0 20 12" aria-hidden="true" className="h-3 w-4 rotate-180">
+            <path d="M1 6h16m0 0-5-5m5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          Back
+        </Link>
 
-          <form onSubmit={onSubmit} className="mt-10 max-w-md space-y-5">
-            <div>
-              <label
-                htmlFor="si-email"
-                className="block font-plex text-xs uppercase tracking-wide text-ink/70"
-              >
-                Email
-              </label>
-              <input
-                id="si-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="si-password"
-                className="block font-plex text-xs uppercase tracking-wide text-ink/70"
-              >
-                Password
-              </label>
-              <input
-                id="si-password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
-              />
-            </div>
-            {error ? <p className="font-plex text-xs text-cobalt">{error}</p> : null}
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full bg-cobalt px-7 py-3.5 text-base font-semibold text-paper shadow-[5px_5px_0_#14181d] transition-all duration-150 active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_#14181d] disabled:opacity-60 motion-reduce:transition-none"
-            >
-              {busy ? "Signing in" : "Sign in"}
-            </button>
-          </form>
+        <p className="mt-10 flex items-center gap-4">
+          <span className="inline-flex items-center rounded-md border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-plex text-[10px] uppercase tracking-[0.25em] text-cobalt">
+            Members only
+          </span>
+          <span className="h-px w-12 bg-cobalt/50" aria-hidden="true" />
+        </p>
 
-          {googleEnabled ? (
-            <div className="mt-8 max-w-md">
-              <GoogleSignInButton label="Sign in with Google" />
-            </div>
-          ) : null}
+        <h1 className="mt-5 text-4xl font-bold tracking-tighter text-ink md:text-6xl">
+          Sign in to unlock <span className="text-cobalt">the full library.</span>
+        </h1>
+        <p className="mt-5 max-w-md text-base leading-relaxed text-ink-dim">
+          Your account is how the garage delivers your tutorials, templates, and All-Access
+          membership — securely, on any device.
+        </p>
 
-          <p className="mt-6 text-sm text-ink/70">
+        <ul className="mt-10 space-y-6">
+          {benefits.map((b) => (
+            <li key={b.title} className="flex items-start gap-4">
+              <span className="icon-tile h-11 w-11 shrink-0">
+                <img src={b.icon} alt="" className="h-7 w-7 mix-blend-multiply" />
+              </span>
+              <span>
+                <span className="block font-plex text-xs font-semibold uppercase tracking-[0.15em] text-ink">
+                  {b.title}
+                </span>
+                <span className="mt-1 block text-sm leading-relaxed text-ink-dim">{b.line}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-8 flex items-start gap-3 rounded-xl border border-line bg-panel/60 px-4 py-3.5 text-sm leading-relaxed text-ink-dim">
+          <span
+            className="mt-1 h-2 w-2 shrink-0 rounded-full bg-cobalt text-cobalt glow-dot"
+            aria-hidden="true"
+          />
+          <span>
             No account yet?{" "}
-            <Link to="/sign-up" className="font-medium text-cobalt underline underline-offset-4 hover:text-ink">
-              Create account
-            </Link>
-          </p>
+            <Link to="/sign-up" className="font-semibold text-cobalt hover:text-ink">
+              Create one free
+            </Link>{" "}
+            — then unlock All-Access from your dashboard, or keep reading the open builds.
+          </span>
+        </p>
+
+        <div className="km-panel mt-10 p-6 md:p-9">
+          <h2 className="text-3xl font-bold tracking-tight text-ink">Sign in</h2>
+          <p className="mt-2 text-sm text-ink-dim">Welcome back. Pick a method to continue.</p>
+
+          <div className="mt-7">
+            {googleEnabled ? <GoogleSignInButton label="Continue with Google" /> : null}
+
+            <form onSubmit={onSubmit} className="mt-6 space-y-5">
+              <div>
+                <label
+                  htmlFor="si-email"
+                  className="block font-plex text-[10px] uppercase tracking-[0.2em] text-steel"
+                >
+                  Email address
+                </label>
+                <input
+                  id="si-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink placeholder:text-steel focus:border-cobalt focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="si-password"
+                  className="block font-plex text-[10px] uppercase tracking-[0.2em] text-steel"
+                >
+                  Password
+                </label>
+                <input
+                  id="si-password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+                />
+              </div>
+              {error ? <p className="font-plex text-xs text-coral">{error}</p> : null}
+              <button
+                type="submit"
+                disabled={busy}
+                className="btn-gold w-full px-7 py-3.5 text-base font-semibold disabled:opacity-60"
+              >
+                {busy ? "Signing in" : "Sign in"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-ink-dim">
+              Don&apos;t have an account?{" "}
+              <Link to="/sign-up" className="font-semibold text-cobalt hover:text-ink">
+                Create account
+              </Link>
+            </p>
+          </div>
         </div>
 
-        <aside className="h-fit border border-ink/25 bg-paper p-8 md:mt-14">
-          <p className="font-plex text-xs font-medium uppercase tracking-[0.2em] text-cobalt">
-            Membership
-          </p>
-          <div className="mt-3 flex items-baseline gap-3">
-            <h2 className="text-2xl font-bold tracking-tight text-ink">All-Access</h2>
-            <span className="font-plex text-cobalt">$10/mo</span>
-          </div>
-          <ul className="mt-6 space-y-4">
-            <li className="flex items-start gap-3">
-              <img src="/assets/icons/icon-cap.png" alt="" className="mt-0.5 h-6 w-6 mix-blend-multiply" />
-              <span className="text-sm leading-relaxed text-ink/80">
-                Every tutorial in the library, including member builds
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <img src="/assets/icons/icon-chip.png" alt="" className="mt-0.5 h-6 w-6 mix-blend-multiply" />
-              <span className="text-sm leading-relaxed text-ink/80">
-                Project templates and source code
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <img src="/assets/icons/icon-envelope.png" alt="" className="mt-0.5 h-6 w-6 mix-blend-multiply" />
-              <span className="text-sm leading-relaxed text-ink/80">
-                Member Q&A: ask about your own build
-              </span>
-            </li>
-          </ul>
-          <p className="mt-6 border-t border-ink/15 pt-4 font-plex text-xs text-steel">
-            Free to unlock while the garage is in beta.
-          </p>
-        </aside>
+        <p className="mt-8 text-center font-plex text-xs text-steel">
+          Curious first?{" "}
+          <Link
+            to="/tutorials"
+            className="text-ink-dim underline underline-offset-4 hover:text-cobalt"
+          >
+            See what All-Access includes
+          </Link>{" "}
+          →
+        </p>
       </div>
     </main>
   );

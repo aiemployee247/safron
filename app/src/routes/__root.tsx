@@ -65,7 +65,7 @@ function buildHead(meta: AppMeta) {
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title },
       { name: "description", content: description },
-      { name: "theme-color", content: "#f3f2ed" },
+      { name: "theme-color", content: "#080c17" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
@@ -85,7 +85,7 @@ function buildHead(meta: AppMeta) {
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" as const },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap",
       },
       ...(favicon
         ? [{ rel: "icon", href: favicon }]
@@ -114,7 +114,7 @@ function NotFoundComponent() {
         </p>
         <Link
           to="/"
-          className="mt-8 inline-block bg-cobalt px-6 py-3 font-plex text-sm font-medium text-paper shadow-[4px_4px_0_#14181d] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#14181d]"
+          className="btn-gold mt-8 inline-block px-6 py-3 font-plex text-sm font-medium"
         >
           Back to the garage
         </Link>
@@ -143,11 +143,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="bg-ink px-5 py-2.5 font-plex text-sm text-paper transition-transform active:scale-[0.98]"
+            className="btn-gold px-5 py-2.5 font-plex text-sm transition-transform active:scale-[0.98]"
           >
             Try again
           </button>
-          <a href="/" className="border border-ink/30 px-5 py-2.5 font-plex text-sm text-ink">
+          <a href="/" className="btn-panel px-5 py-2.5 font-plex text-sm">
             Go home
           </a>
         </div>
@@ -170,7 +170,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" style={{ colorScheme: "light" }}>
+    <html lang="en" style={{ colorScheme: "dark" }}>
       <head>
         <HeadContent />
       </head>

@@ -53,13 +53,13 @@ function ContactPage() {
       />
       <div className="relative mx-auto max-w-2xl">
         <h1 className="text-4xl font-bold tracking-tighter text-ink md:text-6xl">Write in.</h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70">
+        <p className="mt-4 max-w-md text-base leading-relaxed text-ink-dim">
           Questions about a build, a service, or your membership. Replies within two working
           days.
         </p>
 
         {state === "done" ? (
-          <div className="mt-10 border border-ink/25 bg-paper-deep p-8">
+          <div className="km-panel mt-10 p-8">
             <p className="text-lg font-semibold text-ink">Message received.</p>
             <p className="mt-2 text-sm leading-relaxed text-ink/70">
               Thanks for writing in. A reply is on its way to your inbox.
@@ -79,7 +79,7 @@ function ContactPage() {
                 name="name"
                 type="text"
                 required
-                className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
               />
             </div>
             <div>
@@ -94,7 +94,7 @@ function ContactPage() {
                 name="email"
                 type="email"
                 required
-                className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
               />
             </div>
             <div>
@@ -109,21 +109,21 @@ function ContactPage() {
                 name="message"
                 rows={6}
                 required
-                className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
               />
             </div>
-            {state === "error" ? <p className="font-plex text-xs text-cobalt">{error}</p> : null}
+            {state === "error" ? <p className="font-plex text-xs text-coral">{error}</p> : null}
             <button
               type="submit"
               disabled={state === "busy"}
-              className="group relative h-12 w-full overflow-hidden bg-ink font-plex text-sm font-medium text-paper disabled:opacity-60"
+              className="group relative h-12 w-full overflow-hidden rounded-xl border border-line-hi bg-panel-hi font-plex text-sm font-medium text-ink disabled:opacity-60"
             >
               <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 group-hover:-translate-y-full motion-reduce:transition-none">
                 {state === "busy" ? "Sending" : "Send the message"}
               </span>
               <span
                 aria-hidden="true"
-                className="absolute inset-0 flex translate-y-full items-center justify-center bg-cobalt transition-transform duration-300 group-hover:translate-y-0 motion-reduce:transition-none"
+                className="absolute inset-0 flex translate-y-full items-center justify-center bg-cobalt text-paper transition-transform duration-300 group-hover:translate-y-0 motion-reduce:transition-none"
               >
                 {state === "busy" ? "Sending" : "Send the message"}
               </span>

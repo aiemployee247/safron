@@ -62,7 +62,7 @@ function MembersPage() {
           <button
             type="button"
             onClick={onSignOut}
-            className="border border-ink/30 px-4 py-2 font-plex text-xs uppercase tracking-wide text-ink/70 hover:border-ink hover:text-ink"
+            className="btn-panel px-4 py-2 font-plex text-xs uppercase tracking-wide text-ink-dim hover:text-ink"
           >
             Sign out
           </button>
@@ -73,7 +73,7 @@ function MembersPage() {
             type="button"
             onClick={onUnlock}
             disabled={busy}
-            className="group mt-10 flex w-full items-center justify-between bg-cobalt px-6 py-5 text-left text-paper transition-transform duration-300 hover:-translate-y-1 disabled:opacity-70 motion-reduce:transition-none md:px-8"
+            className="btn-gold group mt-10 flex w-full items-center justify-between px-6 py-5 text-left transition-transform duration-300 hover:-translate-y-1 disabled:opacity-70 motion-reduce:transition-none md:px-8"
           >
             <span>
               <span className="block text-xl font-semibold tracking-tight md:text-2xl">
@@ -88,8 +88,11 @@ function MembersPage() {
             </svg>
           </button>
         ) : (
-          <div className="mt-10 border border-cobalt bg-paper-deep px-6 py-5 md:px-8">
-            <p className="text-lg font-semibold text-ink">The whole library is open.</p>
+          <div className="mt-10 rounded-2xl border border-signal/40 bg-signal/10 px-6 py-5 md:px-8">
+            <p className="flex items-center gap-2.5 text-lg font-semibold text-ink">
+              <span className="h-2 w-2 rounded-full bg-signal text-signal glow-dot" aria-hidden="true" />
+              The whole library is open.
+            </p>
             <p className="mt-1 font-plex text-xs text-steel">
               Templates and member Q&A arrive with each new build.
             </p>
@@ -99,7 +102,7 @@ function MembersPage() {
         <h2 className="mt-16 text-3xl font-bold tracking-tighter text-ink md:text-4xl">
           Your library
         </h2>
-        <div className="mt-8 grid gap-px border border-ink/25 bg-ink/25 md:grid-cols-2">
+        <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2">
           {tutorials.map((t) => {
             const open = !t.gated || allAccess;
             return (
@@ -107,7 +110,7 @@ function MembersPage() {
                 key={t.slug}
                 to="/tutorials/$slug"
                 params={{ slug: t.slug }}
-                className="group flex items-center gap-5 bg-paper p-6 transition-colors hover:bg-paper-deep"
+                className="group flex items-center gap-5 bg-panel p-6 transition-colors hover:bg-panel-hi"
               >
                 <img src={t.cover} alt="" className="h-20 w-28 shrink-0 object-contain" />
                 <span className="min-w-0">
@@ -116,11 +119,13 @@ function MembersPage() {
                       {t.title}
                     </span>
                     {!open ? (
-                      <img
-                        src="/assets/icons/icon-lock.png"
-                        alt="Locked"
-                        className="h-4 w-4 mix-blend-multiply"
-                      />
+                      <span className="icon-tile h-5 w-5 shrink-0">
+                        <img
+                          src="/assets/icons/icon-lock.png"
+                          alt="Locked"
+                          className="h-4 w-4 mix-blend-multiply"
+                        />
+                      </span>
                     ) : null}
                   </span>
                   <span className="mt-1 block font-plex text-xs text-steel">

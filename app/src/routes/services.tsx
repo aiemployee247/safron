@@ -82,17 +82,17 @@ function ServicesPage() {
         <h1 className="max-w-lg text-4xl font-bold tracking-tighter text-ink md:ml-16 md:text-6xl">
           Bring your build in.
         </h1>
-        <p className="mt-4 max-w-lg text-base leading-relaxed text-ink/70 md:ml-16">
+        <p className="mt-4 max-w-lg text-base leading-relaxed text-ink-dim md:ml-16">
           Sometimes you want a tutorial. Sometimes you want a second pair of hands on the bench.
         </p>
 
-        <div className="mt-12 border-t border-ink/25">
+        <div className="mt-12 border-t border-line">
           {services.map((s) => (
             <div
               key={s.id}
-              className="grid gap-4 border-b border-ink/25 py-8 md:grid-cols-[48px_1fr_auto]"
+              className="grid gap-4 border-b border-line py-8 md:grid-cols-[56px_1fr_auto]"
             >
-              <img src={s.icon} alt="" className="h-9 w-9 mix-blend-multiply" />
+              <span className="icon-tile h-12 w-12"><img src={s.icon} alt="" className="h-9 w-9 mix-blend-multiply" /></span>
               <div>
                 <div className="flex flex-wrap items-baseline gap-4">
                   <h2 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">
@@ -100,7 +100,7 @@ function ServicesPage() {
                   </h2>
                   <span className="font-plex text-xs text-steel">{s.duration}</span>
                 </div>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">{s.body}</p>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-dim">{s.body}</p>
               </div>
               <span className="text-xl font-semibold text-cobalt md:text-2xl">{s.price}</span>
             </div>
@@ -113,7 +113,7 @@ function ServicesPage() {
             <img
               src="/assets/services-hands.png"
               alt="Hands at a workshop keyboard surrounded by precision tools"
-              className="w-full object-cover"
+              className="w-full rounded-2xl border border-line object-cover"
             />
           </div>
           <div className="md:col-span-7">
@@ -121,7 +121,7 @@ function ServicesPage() {
               Book a session
             </h2>
             {state === "done" ? (
-              <div className="mt-8 border border-ink/25 bg-paper-deep p-8">
+              <div className="km-panel mt-8 p-8">
                 <p className="text-lg font-semibold text-ink">Request received.</p>
                 <p className="mt-2 text-sm leading-relaxed text-ink/70">
                   You will get a reply within two working days with times and next steps.
@@ -141,7 +141,7 @@ function ServicesPage() {
                   <select
                     id="svc"
                     name="service"
-                    className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 font-plex text-sm text-ink focus:border-cobalt focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 font-plex text-sm text-ink focus:border-cobalt focus:outline-none"
                   >
                     <option value="diagnostic-call">Diagnostic call (30 min, $0)</option>
                     <option value="build-sprint">Build sprint (5 days, $2,500)</option>
@@ -159,24 +159,24 @@ function ServicesPage() {
                     id="notes"
                     name="notes"
                     rows={4}
-                    className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
                   />
                 </div>
                 {state === "error" ? (
-                  <p className="font-plex text-xs text-cobalt">{error}</p>
+                  <p className="font-plex text-xs text-coral">{error}</p>
                 ) : null}
                 {/* Split/slide garment: the label slides up, its twin arrives from below. */}
                 <button
                   type="submit"
                   disabled={state === "busy"}
-                  className="group relative h-12 w-full overflow-hidden bg-ink font-plex text-sm font-medium text-paper disabled:opacity-60"
+                  className="group relative h-12 w-full overflow-hidden rounded-xl border border-line-hi bg-panel-hi font-plex text-sm font-medium text-ink disabled:opacity-60"
                 >
                   <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 group-hover:-translate-y-full motion-reduce:transition-none">
                     {state === "busy" ? "Sending" : "Request the session"}
                   </span>
                   <span
                     aria-hidden="true"
-                    className="absolute inset-0 flex translate-y-full items-center justify-center bg-cobalt transition-transform duration-300 group-hover:translate-y-0 motion-reduce:transition-none"
+                    className="absolute inset-0 flex translate-y-full items-center justify-center bg-cobalt text-paper transition-transform duration-300 group-hover:translate-y-0 motion-reduce:transition-none"
                   >
                     {state === "busy" ? "Sending" : "Request the session"}
                   </span>
@@ -214,7 +214,7 @@ function Field({
         name={name}
         type={type}
         required={required}
-        className="mt-2 w-full border border-ink/30 bg-paper px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
+        className="mt-2 w-full rounded-lg border border-line-hi bg-surface px-4 py-3 text-sm text-ink focus:border-cobalt focus:outline-none"
       />
     </div>
   );
