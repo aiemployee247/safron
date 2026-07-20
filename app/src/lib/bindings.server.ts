@@ -24,6 +24,8 @@ type AppEnv = {
   CONTAINER?: DurableObjectNamespace;
   HF_ENV?: string;
   APP_SLUG?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
 };
 
 export function bindings(): AppEnv {

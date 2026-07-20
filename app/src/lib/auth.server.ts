@@ -56,7 +56,7 @@ export type SessionUser = {
   plan: string;
 };
 
-export async function createSession(userId: string): Promise<void> {
+async function newSessionToken(userId: string): Promise<string> {
   const { DB } = bindings();
   if (!DB) throw new Error("database unavailable");
   const token = crypto.randomUUID() + toHex(crypto.getRandomValues(new Uint8Array(16)));
@@ -67,6 +67,18 @@ export async function createSession(userId: string): Promise<void> {
   )
     .bind(tokenHash, userId, expires.toISOString())
     .run();
+  return token;
+}
+
+// For raw server-route handlers (no setCookie helper context guarantees):
+// returns a Set-Cookie header value for a fresh session.
+export async function createSessionSetCookie(userId: string): Promise<string> {
+  const token = await newSessionToken(userId);
+  return `${SESSION_COOKIE}=${token}; Max-Age=${SESSION_DAYS * 86_400}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export async function createSession(userId: string): Promise<void> {
+  const token = await newSessionToken(userId);
   setCookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,

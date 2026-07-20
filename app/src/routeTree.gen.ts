@@ -19,6 +19,8 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TutorialsIndexRouteImport } from './routes/tutorials.index'
 import { Route as TutorialsSlugRouteImport } from './routes/tutorials.$slug'
+import { Route as ApiAuthGoogleRouteImport } from './routes/api.auth.google'
+import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -70,6 +72,16 @@ const TutorialsSlugRoute = TutorialsSlugRouteImport.update({
   path: '/tutorials/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
+  id: '/api/auth/google',
+  path: '/api/auth/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthGoogleRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +94,8 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorials/$slug': typeof TutorialsSlugRoute
   '/tutorials/': typeof TutorialsIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +108,8 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorials/$slug': typeof TutorialsSlugRoute
   '/tutorials': typeof TutorialsIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +123,8 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tutorials/$slug': typeof TutorialsSlugRoute
   '/tutorials/': typeof TutorialsIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +139,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tutorials/$slug'
     | '/tutorials/'
+    | '/api/auth/google'
+    | '/api/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +153,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tutorials/$slug'
     | '/tutorials'
+    | '/api/auth/google'
+    | '/api/auth/google/callback'
   id:
     | '__root__'
     | '/'
@@ -145,6 +167,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tutorials/$slug'
     | '/tutorials/'
+    | '/api/auth/google'
+    | '/api/auth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +182,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TutorialsSlugRoute: typeof TutorialsSlugRoute
   TutorialsIndexRoute: typeof TutorialsIndexRoute
+  ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -232,8 +257,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorialsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/google': {
+      id: '/api/auth/google'
+      path: '/api/auth/google'
+      fullPath: '/api/auth/google'
+      preLoaderRoute: typeof ApiAuthGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/google/callback': {
+      id: '/api/auth/google/callback'
+      path: '/callback'
+      fullPath: '/api/auth/google/callback'
+      preLoaderRoute: typeof ApiAuthGoogleCallbackRouteImport
+      parentRoute: typeof ApiAuthGoogleRoute
+    }
   }
 }
+
+interface ApiAuthGoogleRouteChildren {
+  ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
+}
+
+const ApiAuthGoogleRouteChildren: ApiAuthGoogleRouteChildren = {
+  ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
+}
+
+const ApiAuthGoogleRouteWithChildren = ApiAuthGoogleRoute._addFileChildren(
+  ApiAuthGoogleRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -246,6 +297,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TutorialsSlugRoute: TutorialsSlugRoute,
   TutorialsIndexRoute: TutorialsIndexRoute,
+  ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

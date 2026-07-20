@@ -1,9 +1,11 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
-import { signUp } from "../lib/api/auth.functions";
+import { googleAuthEnabled, signUp } from "../lib/api/auth.functions";
+import { GoogleSignInButton } from "../components/site/google-sign-in-button";
 
 export const Route = createFileRoute("/sign-up")({
+  loader: async () => ({ googleEnabled: await googleAuthEnabled() }),
   head: () => ({
     meta: [
       { title: "Create account: Agent Garage" },
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/sign-up")({
 });
 
 function SignUpPage() {
+  const { googleEnabled } = Route.useLoaderData();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -119,6 +122,12 @@ function SignUpPage() {
             {busy ? "Setting up your bench" : "Create account"}
           </button>
         </form>
+
+        {googleEnabled ? (
+          <div className="mt-8">
+            <GoogleSignInButton label="Continue with Google" />
+          </div>
+        ) : null}
 
         <p className="mt-6 text-sm text-ink/70">
           Already have an account?{" "}

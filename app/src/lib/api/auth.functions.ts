@@ -66,6 +66,13 @@ export const currentUser = createServerFn({ method: "GET" }).handler(async () =>
   return await getSessionUser();
 });
 
+// Whether "Continue with Google" is configured (secrets present). The pages
+// use this to decide if the Google button should render at all.
+export const googleAuthEnabled = createServerFn({ method: "GET" }).handler(async () => {
+  const env = bindings();
+  return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+});
+
 export const unlockAllAccess = createServerFn({ method: "POST" }).handler(async () => {
   const user = await getSessionUser();
   const { DB } = bindings();

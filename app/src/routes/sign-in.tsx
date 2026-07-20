@@ -1,9 +1,14 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
-import { signIn } from "../lib/api/auth.functions";
+import { googleAuthEnabled, signIn } from "../lib/api/auth.functions";
+import { GoogleSignInButton } from "../components/site/google-sign-in-button";
 
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: (search: Record<string, unknown>): { error?: string } => ({
+    ...(typeof search.error === "string" ? { error: search.error } : {}),
+  }),
+  loader: async () => ({ googleEnabled: await googleAuthEnabled() }),
   head: () => ({
     meta: [
       { title: "Sign in: Agent Garage" },
@@ -18,9 +23,17 @@ export const Route = createFileRoute("/sign-in")({
 });
 
 function SignInPage() {
+  const { googleEnabled } = Route.useLoaderData();
+  const { error: searchError } = Route.useSearch();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    searchError === "google"
+      ? "Google sign-in didn't complete. Try again, or use your email and password."
+      : searchError === "google-unavailable"
+        ? "Google sign-in isn't available right now. Use your email and password."
+        : "",
+  );
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -101,6 +114,12 @@ function SignInPage() {
               {busy ? "Signing in" : "Sign in"}
             </button>
           </form>
+
+          {googleEnabled ? (
+            <div className="mt-8 max-w-md">
+              <GoogleSignInButton label="Sign in with Google" />
+            </div>
+          ) : null}
 
           <p className="mt-6 text-sm text-ink/70">
             No account yet?{" "}
