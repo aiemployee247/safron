@@ -49,7 +49,7 @@ for pair in \
   "fleet.js:fleet.js" \
   "routing.example.json:routing.example.json" \
   "board-server.js:board/server.js" \
-  "board-index.html:board/index.html"; do
+  "board-index.html.txt:board/index.html"; do
   remote="$(echo "$pair" | cut -d: -f1)"
   dest="$(echo "$pair" | cut -d: -f2)"
   curl -fsSL "$BASE/$remote" -o "$ROOT/$dest"
