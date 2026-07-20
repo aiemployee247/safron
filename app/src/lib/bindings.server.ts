@@ -29,7 +29,10 @@ type AppEnv = {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_PRICE_ID?: string;
-  ADMIN_DOWNGRADE_TOKEN?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
+  NOTIFY_EMAIL?: string;
+  RESEND_AUDIENCE_ID?: string;
 };
 
 export function bindings(): AppEnv {

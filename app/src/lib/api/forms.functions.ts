@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { bindings } from "../bindings.server";
+import { addToAudience, notifyOwner } from "../email.server";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(200);
 
@@ -21,6 +22,10 @@ export const submitContact = createServerFn({ method: "POST" })
     )
       .bind(data.name, data.email, data.message)
       .run();
+    await notifyOwner(
+      `New contact message from ${data.name}`,
+      `From: ${data.name} <${data.email}>\n\n${data.message}`,
+    );
     return { ok: true as const };
   });
 
@@ -41,6 +46,10 @@ export const requestBooking = createServerFn({ method: "POST" })
     )
       .bind(data.name, data.email, data.service, data.notes)
       .run();
+    await notifyOwner(
+      `New session booking: ${data.service}`,
+      `${data.name} <${data.email}> requested "${data.service}".\n\nNotes:\n${data.notes || "(none)"}`,
+    );
     return { ok: true as const };
   });
 
@@ -54,5 +63,7 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
     )
       .bind(data.email)
       .run();
+    await addToAudience(data.email);
+    await notifyOwner("New newsletter subscriber", `${data.email} subscribed to Shop Notes.`);
     return { ok: true as const };
   });
