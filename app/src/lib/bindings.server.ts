@@ -26,6 +26,9 @@ type AppEnv = {
   APP_SLUG?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PRICE_ID?: string;
 };
 
 export function bindings(): AppEnv {

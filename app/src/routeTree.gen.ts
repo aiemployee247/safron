@@ -23,6 +23,7 @@ import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as TutorialsSlugInstallRouteImport } from './routes/tutorials.$slug_.install'
 import { Route as TutorialsSlugPromptsDotmdRouteImport } from './routes/tutorials.$slug.prompts[.]md'
 import { Route as TutorialsSlugBundleDotzipRouteImport } from './routes/tutorials.$slug.bundle[.]zip'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe.webhook'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api.auth.google'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
 
@@ -98,6 +99,11 @@ const TutorialsSlugBundleDotzipRoute =
     path: '/bundle.zip',
     getParentRoute: () => TutorialsSlugRoute,
   } as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
   id: '/api/auth/google',
   path: '/api/auth/google',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug_/install': typeof TutorialsSlugInstallRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/tutorials/$slug'
     | '/tutorials/'
     | '/api/auth/google'
+    | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug/install'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/tutorials/$slug'
     | '/tutorials'
     | '/api/auth/google'
+    | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug/install'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/tutorials/$slug'
     | '/tutorials/'
     | '/api/auth/google'
+    | '/api/stripe/webhook'
     | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug_/install'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   TutorialsSlugRoute: typeof TutorialsSlugRouteWithChildren
   TutorialsIndexRoute: typeof TutorialsIndexRoute
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   TutorialsSlugInstallRoute: typeof TutorialsSlugInstallRoute
 }
 
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorialsSlugBundleDotzipRouteImport
       parentRoute: typeof TutorialsSlugRoute
     }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/google': {
       id: '/api/auth/google'
       path: '/api/auth/google'
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   TutorialsSlugRoute: TutorialsSlugRouteWithChildren,
   TutorialsIndexRoute: TutorialsIndexRoute,
   ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   TutorialsSlugInstallRoute: TutorialsSlugInstallRoute,
 }
 export const routeTree = rootRouteImport
