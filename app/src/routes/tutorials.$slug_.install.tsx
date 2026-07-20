@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { getTutorialContent } from "../lib/api/tutorials.functions";
 
-export const Route = createFileRoute("/tutorials/$slug/install")({
+export const Route = createFileRoute("/tutorials/$slug_/install")({
   loader: async ({ params }) => {
     const content = await getTutorialContent({ data: { slug: params.slug } });
     // Only flagship-format tutorials ship an installer.
