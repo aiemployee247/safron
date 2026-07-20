@@ -10,8 +10,12 @@ export const tutorialBlocks: Record<string, TutorialBlock[]> = {
       text: "By the end of this build you'll run a six-agent AI crew: a Director who takes your instructions from Telegram and owns outcomes, and five specialists — Scout (research), Scribe (writing), Rig (engineering), Tally (numbers), and Relay (comms) — each answering in its own Discord channel. A four-tab Mission Control dashboard on your VPS shows the crew working live: a Command Center, per-agent stats, a task board, and a System Monitor that tracks token usage and estimated cost per agent. Every step is a copy-paste prompt into your coding agent on the server, followed by a quick check.",
     },
     {
+      kind: "p",
+      text: "The crew runs on OpenClaw — the open-source agent framework that gives each agent its own persistent identity, long-term memory, and tool access. The Director and the five specialists are all OpenClaw agents; the prompts below shape their identities and wire them to Telegram and Discord. If you followed the OpenClaw setup on your VPS, you already have everything this build assumes.",
+    },
+    {
       kind: "note",
-      text: "This is an advanced build that spans two chat platforms — Telegram for the Director, Discord for the crew. If this is your first agent-on-a-VPS project, do the Telegram Ops Bot tutorial first for the server basics.",
+      text: "This is an advanced build that spans two chat platforms — Telegram for the Director, Discord for the crew — on top of OpenClaw. If this is your first agent-on-a-VPS project, do the Telegram Ops Bot tutorial first for the server basics.",
     },
     {
       kind: "part",

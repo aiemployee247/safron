@@ -183,19 +183,31 @@ function TutorialPage() {
           <section className="km-panel mt-8 p-6 md:p-8">
             <h2 className="text-xl font-bold tracking-tight text-ink">Unlock the downloads</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-dim">
-              All {promptCount} prompts as one .md file{meta.installer ? ", plus the one-line auto-installer" : ""}.
-              All-Access unlocks every tutorial, template, and download on the platform —
-              free while the garage is in beta.
+              All {promptCount} prompts as one .md file
+              {meta.dashboardTemplate ? ", the dashboard template, a full .zip bundle," : ""}
+              {meta.installer ? " and the one-line auto-installer" : ""}. All-Access unlocks every
+              tutorial, template, and download on the platform — free while the garage is in beta.
             </p>
-            <div className="mt-5 flex flex-wrap items-center gap-4">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               {viewer.allAccess ? (
                 <>
                   <a
                     href={`/tutorials/${meta.slug}/prompts.md`}
-                    className="btn-gold px-6 py-3 text-sm font-semibold"
+                    className="btn-panel px-5 py-3 text-sm font-medium"
                   >
                     Download all prompts (.md)
                   </a>
+                  {meta.dashboardTemplate ? (
+                    <a
+                      href={`/tutorials/${meta.slug}/bundle.zip`}
+                      className="btn-gold px-6 py-3 text-sm font-semibold"
+                    >
+                      Download bundle (.zip)
+                    </a>
+                  ) : null}
+                  <Link to="/services" className="btn-panel px-5 py-3 text-sm font-medium">
+                    Deploy this for me
+                  </Link>
                   {meta.installer ? (
                     <Link
                       to="/tutorials/$slug/install"
@@ -214,17 +226,14 @@ function TutorialPage() {
                   >
                     Unlock All-Access — $10/mo
                   </Link>
+                  <Link to="/services" className="btn-panel px-5 py-3 text-sm font-medium">
+                    Deploy this for me
+                  </Link>
                   <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-signal">
                     Free during beta
                   </span>
                 </>
               )}
-              <Link
-                to="/services"
-                className="font-plex text-xs text-ink-dim underline underline-offset-4 hover:text-cobalt"
-              >
-                Or have us deploy this for you →
-              </Link>
             </div>
           </section>
         ) : null}
