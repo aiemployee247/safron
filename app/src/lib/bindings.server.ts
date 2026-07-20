@@ -33,6 +33,9 @@ type AppEnv = {
   RESEND_FROM?: string;
   NOTIFY_EMAIL?: string;
   RESEND_AUDIENCE_ID?: string;
+  // Public origin of THIS deployment (e.g. https://agent.qepilot.com on the
+  // self-hosted VPS). Unset on Higgsfield → falls back to the higgsfield host.
+  PUBLIC_ORIGIN?: string;
 };
 
 export function bindings(): AppEnv {

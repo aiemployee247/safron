@@ -8,9 +8,12 @@ import {
   stripeConfigured,
 } from "../stripe.server";
 
-// Canonical site origin for Stripe redirect URLs (checkout success/cancel and
-// the billing-portal return). The members area lives on this host.
-const SITE_ORIGIN = "https://agent-garage.higgsfield.app";
+// Site origin for Stripe redirect URLs (checkout success/cancel and the
+// billing-portal return). Driven by PUBLIC_ORIGIN so the self-hosted VPS uses
+// its own domain; falls back to the Higgsfield host when unset.
+function siteOrigin(): string {
+  return bindings().PUBLIC_ORIGIN || "https://agent-garage.higgsfield.app";
+}
 
 // Whether real paid checkout is wired (Stripe secrets present). The members
 // area uses this to decide between Stripe checkout and the free beta unlock.
@@ -41,7 +44,7 @@ export const startCheckout = createServerFn({ method: "POST" }).handler(async ()
     .bind(user.id)
     .first<{ stripe_customer_id: string | null }>();
 
-  const origin = SITE_ORIGIN;
+  const origin = siteOrigin();
   try {
     const url = await createCheckoutSession(
       { id: user.id, email: user.email, stripeCustomerId: row?.stripe_customer_id ?? null },
@@ -64,7 +67,7 @@ export const openBillingPortal = createServerFn({ method: "POST" }).handler(asyn
     .first<{ stripe_customer_id: string | null }>();
   if (!row?.stripe_customer_id) return { ok: false as const, error: "No subscription found." };
 
-  const origin = SITE_ORIGIN;
+  const origin = siteOrigin();
   try {
     const url = await createBillingPortalSession(row.stripe_customer_id, origin);
     return { ok: true as const, url };

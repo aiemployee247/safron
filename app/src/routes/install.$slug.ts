@@ -4,6 +4,70 @@ import { createFileRoute } from '@tanstack/react-router'
 // only revealed to members on the /install page, but the script itself must be
 // publicly curl-able (a fresh VPS has no session cookie).
 const installers: Record<string, string> = {
+  'agent-garage': String.raw`#!/usr/bin/env bash
+# Agent Garage — self-host installer (runs the exact site build on your VPS via
+# Miniflare/workerd, with a local SQLite-backed D1). Run on Debian/Ubuntu.
+set -euo pipefail
+
+BASE="https://agent-garage.higgsfield.app"
+ROOT=/opt/agent-garage
+
+echo "== Agent Garage self-host installer =="
+command -v node >/dev/null 2>&1 || {
+  echo "Installing Node 20..."
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+}
+sudo apt-get install -y tar >/dev/null 2>&1 || true
+
+sudo mkdir -p "$ROOT"
+sudo chown -R "$USER" "$ROOT"
+cd "$ROOT"
+
+echo "Downloading site bundle (~12MB)..."
+curl -fsSL "$BASE/selfhost/agent-garage-selfhost.tar.gz" -o bundle.tar.gz
+tar -xzf bundle.tar.gz && rm -f bundle.tar.gz
+
+echo "Installing runtime (Miniflare + workerd, ~1 min)..."
+npm install --omit=dev >/dev/null 2>&1
+
+# Base config. Secrets (Stripe/Google/Resend) get added in a later step; the
+# site renders fully without them (those features stay dormant until set).
+if [ ! -f .env ]; then
+  cat > .env <<EOF
+PORT=8090
+PUBLIC_ORIGIN=https://agent.qepilot.com
+D1_PERSIST=$ROOT/data/d1
+EOF
+fi
+chmod 600 .env
+
+NODE_BIN="$(command -v node)"
+sudo tee /etc/systemd/system/agent-garage.service >/dev/null <<EOF
+[Unit]
+Description=Agent Garage (self-hosted via Miniflare)
+After=network.target
+[Service]
+WorkingDirectory=$ROOT
+ExecStart=$NODE_BIN $ROOT/serve.mjs
+Restart=always
+RestartSec=5
+User=$USER
+EnvironmentFile=$ROOT/.env
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now agent-garage
+sleep 5
+
+echo ""
+echo "== Done =="
+systemctl is-active agent-garage
+curl -s -o /dev/null -w "local check (want 200): %{http_code}\n" http://127.0.0.1:8090/ || true
+echo "The site is serving on 127.0.0.1:8090. Next: the agent.qepilot.com Traefik route + cert."
+`,
   'pit-crew-mission-control': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Pit Crew (5-agent Telegram fleet + Pit Board)
 # https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control
