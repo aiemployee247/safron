@@ -28,9 +28,9 @@ command -v node >/dev/null 2>&1 || {
 sudo apt-get install -y build-essential python3 >/dev/null 2>&1 || true  # native build deps for better-sqlite3
 
 # --- config -----------------------------------------------------------------
-read -rp "Telegram bot token (from @BotFather): " BOT_TOKEN
-read -rp "Your numeric Telegram user id (from @userinfobot): " OWNER_ID
-read -rp "Anthropic API key (sk-ant-...): " ANTHROPIC_API_KEY
+read -rp "Telegram bot token (from @BotFather): " BOT_TOKEN < /dev/tty
+read -rp "Your numeric Telegram user id (from @userinfobot): " OWNER_ID < /dev/tty
+read -rp "Anthropic API key (sk-ant-...): " ANTHROPIC_API_KEY < /dev/tty
 [ -n "$BOT_TOKEN" ] && [ -n "$OWNER_ID" ] && [ -n "$ANTHROPIC_API_KEY" ] || {
   echo "All three values are required."; exit 1;
 }
@@ -129,8 +129,8 @@ command -v node >/dev/null 2>&1 || {
   sudo apt-get install -y nodejs
 }
 
-read -rp "Telegram bot token (from @BotFather): " BOT_TOKEN
-read -rp "Your numeric Telegram user id (from @userinfobot): " OWNER_ID
+read -rp "Telegram bot token (from @BotFather): " BOT_TOKEN < /dev/tty
+read -rp "Your numeric Telegram user id (from @userinfobot): " OWNER_ID < /dev/tty
 [ -n "$BOT_TOKEN" ] && [ -n "$OWNER_ID" ] || { echo "Both values are required."; exit 1; }
 
 sudo mkdir -p /opt/ops-bot
