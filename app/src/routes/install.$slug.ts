@@ -7,14 +7,16 @@ const installers: Record<string, string> = {
   'pit-crew-mission-control': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Pit Crew (5-agent Telegram fleet + Pit Board)
 # https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control
-# Scaffolds the whole project so the tutorial's prompts have a real home to
-# build into. Run on a fresh Debian/Ubuntu box as a sudo-capable user.
+# Installs a REAL, runnable fleet: five topic-routed agents on Telegram plus a
+# live read-only Pit Board dashboard. Run on a fresh Debian/Ubuntu box as a
+# sudo-capable user.
 set -euo pipefail
 
+BASE="https://agent-garage.higgsfield.app/pit-crew-starter"
+ROOT=/opt/pit-crew
+
 echo "== Agent Garage — Pit Crew installer =="
-echo "This scaffolds the project structure, dependencies, and config."
-echo "You'll finish wiring the agents by pasting the tutorial's prompts into"
-echo "your coding agent afterwards."
+echo "Installs a working 5-agent Telegram fleet + live Pit Board dashboard."
 echo ""
 
 # --- dependencies -----------------------------------------------------------
@@ -23,24 +25,26 @@ command -v node >/dev/null 2>&1 || {
   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
   sudo apt-get install -y nodejs
 }
-command -v python3 >/dev/null 2>&1 || sudo apt-get install -y python3 python3-pip
-command -v sqlite3 >/dev/null 2>&1 || sudo apt-get install -y sqlite3
+sudo apt-get install -y build-essential python3 >/dev/null 2>&1 || true  # native build deps for better-sqlite3
 
 # --- config -----------------------------------------------------------------
 read -rp "Telegram bot token (from @BotFather): " BOT_TOKEN
 read -rp "Your numeric Telegram user id (from @userinfobot): " OWNER_ID
 read -rp "Anthropic API key (sk-ant-...): " ANTHROPIC_API_KEY
-[ -n "$BOT_TOKEN" ] && [ -n "$OWNER_ID" ] || { echo "Bot token and owner id are required."; exit 1; }
+[ -n "$BOT_TOKEN" ] && [ -n "$OWNER_ID" ] && [ -n "$ANTHROPIC_API_KEY" ] || {
+  echo "All three values are required."; exit 1;
+}
 
-ROOT=/opt/pit-crew
-sudo mkdir -p "$ROOT"
-sudo chown "$USER" "$ROOT"
+sudo mkdir -p "$ROOT/board"
+sudo chown -R "$USER" "$ROOT"
 cd "$ROOT"
 
-# --- directory layout: one workspace per agent ------------------------------
-for agent in foreman radar quill wrench ledger board archive; do
-  mkdir -p "$ROOT/$agent"
+# --- fetch the real fleet files --------------------------------------------
+echo "Fetching fleet files..."
+for f in package.json agents.js logbook.js fleet.js routing.example.json board/server.js board/index.html; do
+  curl -fsSL "$BASE/$f" -o "$ROOT/$f"
 done
+cp -n routing.example.json routing.json
 
 cat > .env <<EOF
 BOT_TOKEN=$BOT_TOKEN
@@ -49,51 +53,56 @@ ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
 EOF
 chmod 600 .env
 
-# --- shared operating rules (Prompt 3 writes the real ones; this is a stub) --
-cat > RULES.md <<'EOF'
-# Pit Crew — operating rules (stub)
-# The tutorial's Prompt 3 replaces this with your finished rules.
-1. Plans before actions on anything multi-step; wait for the owner's go-ahead.
-2. One short status line per step: [agent] step x/y — what.
-3. Failed means failed, with the error shown. No invented results.
-4. Cross-agent work always routes through the Foreman.
-5. Lead with the result, not the preamble.
+# --- install deps (builds better-sqlite3) -----------------------------------
+echo "Installing dependencies (this compiles better-sqlite3, ~30s)..."
+npm install >/dev/null
+
+# --- run fleet + board as services ------------------------------------------
+NODE_BIN="$(command -v node)"
+
+sudo tee /etc/systemd/system/pit-crew-fleet.service >/dev/null <<EOF
+[Unit]
+Description=Pit Crew fleet
+After=network.target
+[Service]
+WorkingDirectory=$ROOT
+ExecStart=$NODE_BIN $ROOT/fleet.js
+Restart=always
+User=$USER
+EnvironmentFile=$ROOT/.env
+[Install]
+WantedBy=multi-user.target
 EOF
 
-# --- routing map (Prompt 8 fills in the real thread ids) --------------------
-cat > routing.json <<'EOF'
-{
-  "_comment": "Fill each thread id from your Telegram topics (Prompt 8).",
-  "threads": { "foreman": 0, "radar": 0, "quill": 0, "wrench": 0, "ledger": 0 }
-}
+sudo tee /etc/systemd/system/pit-crew-board.service >/dev/null <<EOF
+[Unit]
+Description=Pit Crew Pit Board (read-only dashboard)
+After=network.target
+[Service]
+WorkingDirectory=$ROOT
+ExecStart=$NODE_BIN $ROOT/board/server.js
+Restart=always
+User=$USER
+Environment=BOARD_PORT=8787
+[Install]
+WantedBy=multi-user.target
 EOF
 
-# --- shared logbook (Prompt 10 uses this schema) ----------------------------
-sqlite3 "$ROOT/logbook.db" <<'EOF'
-CREATE TABLE IF NOT EXISTS events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts TEXT NOT NULL DEFAULT (datetime('now')),
-  agent TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  summary TEXT NOT NULL,
-  detail TEXT
-);
-INSERT INTO events (agent, kind, summary) VALUES ('installer', 'note', 'project scaffolded');
-EOF
-
-# --- node deps for the fleet ------------------------------------------------
-npm init -y >/dev/null
-npm pkg set type=module >/dev/null
-npm install grammy @anthropic-ai/sdk better-sqlite3 dotenv >/dev/null
+sudo systemctl daemon-reload
+sudo systemctl enable --now pit-crew-board
+# The fleet needs routing.json filled in before it's useful; enable but don't
+# fail the install if it restarts waiting for thread ids.
+sudo systemctl enable --now pit-crew-fleet || true
 
 echo ""
-echo "== Scaffold complete =="
-echo "  $ROOT/            .env, RULES.md, routing.json, logbook.db"
-echo "  $ROOT/<agent>/    one workspace per agent (foreman radar quill wrench ledger)"
-echo "  $ROOT/board/      the Pit Board lives here"
+echo "== Pit Crew installed =="
+echo "  Pit Board:  http://127.0.0.1:8787   (read-only; expose privately via Tailscale)"
+echo "  Fleet:      systemctl status pit-crew-fleet"
 echo ""
-echo "Next: open the tutorial and paste the prompts into your coding agent, starting"
-echo "at Prompt 1. The project structure they expect is already in place."
+echo "The Foreman answers now. To route the specialists to their own Telegram"
+echo "topics, fill $ROOT/routing.json with your topic thread ids (tutorial Prompt 7-8),"
+echo "then: sudo systemctl restart pit-crew-fleet"
+echo ""
 echo "Tutorial: https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control"
 `,
   'telegram-ops-bot': String.raw`#!/usr/bin/env bash

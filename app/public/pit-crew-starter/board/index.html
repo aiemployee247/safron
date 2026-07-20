@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pit Board — Agent Garage</title>
+    <style>
+      :root {
+        --bg: #080c17; --panel: #121724; --panel-hi: #1a2030;
+        --line: #272c3c; --ink: #f3f5fb; --dim: #b4b7c1; --faint: #70747f;
+        --gold: #eac266; --signal: #00c89c;
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+        --sans: "Work Sans", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { background: var(--bg); color: var(--ink); font-family: var(--sans); padding: 24px; }
+      .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
+        text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 12px; }
+      .eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--gold); }
+      h1 { font-size: 28px; letter-spacing: -.02em; margin: 12px 0 4px; }
+      .sub { color: var(--dim); font-size: 14px; margin-bottom: 24px; }
+      .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+      .card { background: linear-gradient(180deg, var(--panel-hi), var(--panel));
+        border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+      .card .name { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); }
+      .dot.active { background: var(--signal); box-shadow: 0 0 10px var(--signal); }
+      .role { font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+      .last { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 10px; }
+      .cols { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 24px; }
+      @media (min-width: 800px) { .cols { grid-template-columns: 3fr 2fr; } }
+      .section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+      .section h2 { font-family: var(--mono); font-size: 12px; letter-spacing: .18em;
+        text-transform: uppercase; color: var(--ink); margin-bottom: 12px; }
+      .section h2 .slash { color: var(--gold); }
+      .row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0;
+        border-bottom: 1px solid var(--line); font-size: 13px; }
+      .row:last-child { border-bottom: 0; }
+      .row .t { font-family: var(--mono); font-size: 10px; color: var(--faint); min-width: 62px; }
+      .row .a { font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+        letter-spacing: .1em; color: var(--gold); min-width: 60px; }
+      .row .k { font-family: var(--mono); font-size: 10px; color: var(--dim); min-width: 58px; }
+      .row .s { color: var(--ink); }
+      .empty { color: var(--faint); font-size: 13px; font-family: var(--mono); }
+      .status { font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+        text-transform: uppercase; color: var(--faint); margin-top: 24px; }
+    </style>
+  </head>
+  <body>
+    <div class="eyebrow">Mission Control</div>
+    <h1>Pit Board</h1>
+    <div class="sub">Live read-only view of the crew. Updates every few seconds.</div>
+
+    <div class="grid" id="agents"></div>
+
+    <div class="cols">
+      <div class="section">
+        <h2><span class="slash">//</span> Live feed</h2>
+        <div id="events"><div class="empty">waiting for activity…</div></div>
+      </div>
+      <div class="section">
+        <h2><span class="slash">//</span> Open tasks</h2>
+        <div id="tasks"><div class="empty">nothing running</div></div>
+      </div>
+    </div>
+
+    <div class="status" id="status">connecting…</div>
+
+    <script>
+      const ROLES = {
+        foreman: "coordinator", radar: "research", quill: "writing",
+        wrench: "engineering", ledger: "numbers",
+      };
+      const fmt = (ts) => (ts ? ts.replace("T", " ").slice(5, 16) : "—");
+
+      async function tick() {
+        try {
+          const [agents, events, tasks] = await Promise.all([
+            fetch("/api/agents").then((r) => r.json()),
+            fetch("/api/events?limit=40").then((r) => r.json()),
+            fetch("/api/tasks").then((r) => r.json()),
+          ]);
+
+          document.getElementById("agents").innerHTML = agents
+            .map(
+              (a) => `
+              <div class="card">
+                <div class="name"><span class="dot ${a.status === "active" ? "active" : ""}"></span>${a.agent}</div>
+                <div class="role">${ROLES[a.agent] || ""}</div>
+                <div class="last">last: ${fmt(a.lastActivity)}</div>
+              </div>`,
+            )
+            .join("");
+
+          document.getElementById("events").innerHTML = events.length
+            ? events
+                .map(
+                  (e) => `
+                <div class="row">
+                  <span class="t">${fmt(e.ts)}</span>
+                  <span class="a">${e.agent}</span>
+                  <span class="k">${e.kind}</span>
+                  <span class="s">${escapeHtml(e.summary)}</span>
+                </div>`,
+                )
+                .join("")
+            : '<div class="empty">no events yet</div>';
+
+          document.getElementById("tasks").innerHTML = tasks.length
+            ? tasks
+                .map(
+                  (t) => `
+                <div class="row">
+                  <span class="a">${t.agent}</span>
+                  <span class="s">${escapeHtml(t.summary)}</span>
+                </div>`,
+                )
+                .join("")
+            : '<div class="empty">nothing running</div>';
+
+          document.getElementById("status").textContent =
+            "live · updated " + new Date().toLocaleTimeString();
+        } catch (err) {
+          document.getElementById("status").textContent = "reconnecting…";
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"]/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      }
+
+      tick();
+      setInterval(tick, 4000);
+    </script>
+  </body>
+</html>

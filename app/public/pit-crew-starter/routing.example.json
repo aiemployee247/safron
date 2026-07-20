@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to routing.json and fill each thread id from your Telegram topics (tutorial Prompt 8). Leave 0 to route that topic to the Foreman.",
+  "threads": {
+    "foreman": 0,
+    "radar": 0,
+    "quill": 0,
+    "wrench": 0,
+    "ledger": 0
+  }
+}
