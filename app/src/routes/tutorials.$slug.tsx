@@ -25,7 +25,6 @@ export const Route = createFileRoute("/tutorials/$slug")({
 function TutorialPage() {
   const { meta, blocks, locked, lockedReason, viewer } = Route.useLoaderData();
   const flagship = Boolean(meta.contents?.length);
-  const promptCount = blocks.filter((b) => b.kind === "prompt").length;
 
   return (
     <main className="px-4 py-14 md:px-6 md:py-20">
@@ -52,8 +51,56 @@ function TutorialPage() {
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-dim">{meta.deck}</p>
 
+        {/* Downloads + membership CTA — right under the heading, not buried below the fold */}
+        {flagship ? (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {viewer.allAccess ? (
+              <>
+                <a
+                  href={`/tutorials/${meta.slug}/prompts.md`}
+                  className="btn-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                >
+                  Download all prompts (.md)
+                </a>
+                {meta.dashboardTemplate ? (
+                  <a
+                    href={`/tutorials/${meta.slug}/bundle.zip`}
+                    className="btn-gold px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                  >
+                    Download bundle (.zip)
+                  </a>
+                ) : null}
+                <Link
+                  to="/services"
+                  className="btn-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                >
+                  Deploy this for me
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to={viewer.signedIn ? "/members" : "/sign-up"}
+                  className="btn-gold px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                >
+                  Unlock All-Access — $10/mo
+                </Link>
+                <Link
+                  to="/services"
+                  className="btn-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                >
+                  Deploy this for me
+                </Link>
+                <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-signal">
+                  Free during beta
+                </span>
+              </>
+            )}
+          </div>
+        ) : null}
+
         {/* Stats + badges + share */}
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           {meta.builders ? (
             <span className="rounded-lg border border-line bg-panel px-3 py-1.5 text-center">
               <span className="block font-plex text-sm font-semibold text-ink">
@@ -175,66 +222,6 @@ function TutorialPage() {
                 </li>
               ))}
             </ul>
-          </section>
-        ) : null}
-
-        {/* Downloads + membership pitch */}
-        {flagship ? (
-          <section className="km-panel mt-8 p-6 md:p-8">
-            <h2 className="text-xl font-bold tracking-tight text-ink">Unlock the downloads</h2>
-            <p className="mt-2 text-sm leading-relaxed text-ink-dim">
-              All {promptCount} prompts as one .md file
-              {meta.dashboardTemplate ? ", the dashboard template, a full .zip bundle," : ""}
-              {meta.installer ? " and the one-line auto-installer" : ""}. All-Access unlocks every
-              tutorial, template, and download on the platform — free while the garage is in beta.
-            </p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              {viewer.allAccess ? (
-                <>
-                  <a
-                    href={`/tutorials/${meta.slug}/prompts.md`}
-                    className="btn-panel px-5 py-3 text-sm font-medium"
-                  >
-                    Download all prompts (.md)
-                  </a>
-                  {meta.dashboardTemplate ? (
-                    <a
-                      href={`/tutorials/${meta.slug}/bundle.zip`}
-                      className="btn-gold px-6 py-3 text-sm font-semibold"
-                    >
-                      Download bundle (.zip)
-                    </a>
-                  ) : null}
-                  <Link to="/services" className="btn-panel px-5 py-3 text-sm font-medium">
-                    Deploy this for me
-                  </Link>
-                  {meta.installer ? (
-                    <Link
-                      to="/tutorials/$slug/install"
-                      params={{ slug: meta.slug }}
-                      className="btn-panel px-5 py-3 text-sm font-medium"
-                    >
-                      Open the auto-installer
-                    </Link>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <Link
-                    to={viewer.signedIn ? "/members" : "/sign-up"}
-                    className="btn-gold px-6 py-3 text-sm font-semibold"
-                  >
-                    Unlock All-Access — $10/mo
-                  </Link>
-                  <Link to="/services" className="btn-panel px-5 py-3 text-sm font-medium">
-                    Deploy this for me
-                  </Link>
-                  <span className="font-plex text-[10px] uppercase tracking-[0.2em] text-signal">
-                    Free during beta
-                  </span>
-                </>
-              )}
-            </div>
           </section>
         ) : null}
 
