@@ -13,6 +13,7 @@ export const Route = createFileRoute("/services")({
           "Bring your build in: diagnostic calls, focused build sprints, and ongoing support for your agents and automations.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/services" }],
   }),
   component: ServicesPage,
 });

@@ -13,6 +13,7 @@ export const Route = createFileRoute("/tutorials/")({
           "The Agent Garage tutorial library: AI agents, automation, and self-hosting builds with copy-paste commands.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/tutorials" }],
   }),
   component: TutorialsPage,
 });

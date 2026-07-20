@@ -12,6 +12,7 @@ export const Route = createFileRoute("/sign-in")({
         content: "Sign in to unlock the full Agent Garage tutorial library and your All-Access membership.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/sign-in" }],
   }),
   component: SignInPage,
 });

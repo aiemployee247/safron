@@ -12,7 +12,7 @@ export const Route = createFileRoute("/members")({
   },
   loader: ({ context }) => ({ user: context.user }),
   head: () => ({
-    meta: [{ title: "Members: Agent Garage" }],
+    meta: [{ title: "Members: Agent Garage" }, { name: "robots", content: "noindex" }],
   }),
   component: MembersPage,
 });

@@ -12,6 +12,7 @@ export const Route = createFileRoute("/contact")({
         content: "Questions about a tutorial, a service, or your membership. Write in and get a reply within two working days.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/contact" }],
   }),
   component: ContactPage,
 });

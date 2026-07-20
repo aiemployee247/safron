@@ -15,6 +15,7 @@ export const Route = createFileRoute("/")({
           "Step-by-step tutorials for AI agents, automation, and self-hosting, with copy-paste commands. Plus hands-on help when you want a second pair of hands.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/" }],
   }),
   component: Home,
 });

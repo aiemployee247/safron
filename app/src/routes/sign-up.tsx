@@ -12,6 +12,7 @@ export const Route = createFileRoute("/sign-up")({
         content: "Create your Agent Garage account and start building agents that actually run.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://agent-garage.higgsfield.app/sign-up" }],
   }),
   component: SignUpPage,
 });

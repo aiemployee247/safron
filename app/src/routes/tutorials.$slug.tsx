@@ -15,6 +15,9 @@ export const Route = createFileRoute("/tutorials/$slug")({
       { title: `${loaderData?.meta.title ?? "Tutorial"}: Agent Garage` },
       { name: "description", content: loaderData?.meta.deck ?? "" },
     ],
+    links: loaderData
+      ? [{ rel: "canonical", href: `https://agent-garage.higgsfield.app/tutorials/${loaderData.meta.slug}` }]
+      : [],
   }),
   component: TutorialPage,
 });
