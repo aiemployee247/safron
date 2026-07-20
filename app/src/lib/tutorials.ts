@@ -35,6 +35,68 @@ export type Tutorial = {
 
 export const tutorials: Tutorial[] = [
   {
+    slug: "pit-crew-mission-control",
+    title: "Build a Pit Crew — 5-Agent AI Fleet on Telegram with a Live Pit Board Dashboard",
+    deck: "A Foreman agent coordinating four specialists — Radar, Quill, Wrench, and Ledger — each in its own Telegram channel, with a live read-only Pit Board dashboard on your VPS. 14 copy-paste prompts.",
+    track: "AI Agents",
+    minutes: 150,
+    level: "Advanced",
+    gated: true,
+    cover: "/assets/tutorial-telegram.png",
+    date: "Jul 2026",
+    builders: "2.1k",
+    prereqs: [
+      "A VPS with Claude Code (or another capable coding agent) installed",
+      "Node 20 or newer on the box",
+      "An Anthropic API key for the fleet's model calls",
+      "A Telegram account and a bot token from @BotFather",
+      "Basic comfort with SSH and the command line",
+      "About 2–3 hours of focused setup time",
+    ],
+    contents: [
+      {
+        part: "Part 01 / 06 — Foundation — the Foreman & the shop rules",
+        steps: [
+          "Give the Foreman its identity",
+          "Let the Foreman interview you",
+          "Install the shop rules",
+        ],
+      },
+      {
+        part: "Part 02 / 06 — The specialist crew",
+        steps: [
+          "Hire Radar, Quill, Wrench & Ledger",
+          "Isolated workspaces & role boundaries",
+          "Shared crew awareness",
+        ],
+      },
+      {
+        part: "Part 03 / 06 — Telegram routing — one channel per agent",
+        steps: [
+          "Create the group & topic threads",
+          "Build the router",
+          "Verify every channel answers as itself",
+        ],
+      },
+      {
+        part: "Part 04 / 06 — The logbook — activity logging & memory",
+        steps: ["Create the shared logbook", "Nightly log rotation"],
+      },
+      {
+        part: "Part 05 / 06 — The Pit Board — live dashboard",
+        steps: [
+          "Build the read-only data layer",
+          "Build the Pit Board page",
+          "Wire live updates",
+        ],
+      },
+      {
+        part: "Part 06 / 06 — Troubleshooting prompts",
+        steps: ["Every channel answers as the Foreman", "The Pit Board shows stale data"],
+      },
+    ],
+  },
+  {
     slug: "inbox-zero-agent",
     title: "Inbox Zero Agent",
     deck: "An agent that reads your inbox, sorts what matters, and drafts replies you approve with one click.",

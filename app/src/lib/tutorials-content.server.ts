@@ -4,6 +4,202 @@ import type { TutorialBlock } from "./tutorials";
 // client components; it is served through getTutorialContent, which trims
 // gated tutorials to a preview for non-members.
 export const tutorialBlocks: Record<string, TutorialBlock[]> = {
+  "pit-crew-mission-control": [
+    {
+      kind: "p",
+      text: "By the end of this build you'll have a five-agent AI crew living on Telegram: a Foreman who takes your instructions and owns outcomes, four specialists — Radar (research), Quill (writing), Wrench (engineering), and Ledger (numbers and tracking) — each answering in its own channel, and a live read-only Pit Board dashboard on your VPS that shows what every agent is doing right now. The whole thing is driven by copy-paste prompts: each one goes into your coding agent on the server, and after each you run a quick check so you know it landed before moving on.",
+    },
+    {
+      kind: "note",
+      text: "This is an advanced build. If you've never stood up an agent on a VPS before, do the Telegram Ops Bot tutorial first — it covers the server basics this one assumes.",
+    },
+    {
+      kind: "part",
+      num: 1,
+      total: 6,
+      title: "Foundation — the Foreman & the shop rules",
+      blurb:
+        "Stand up the top-level coordinator, let it learn who you are and what you're working on, and lock in the permanent rules the whole crew runs by.",
+    },
+    { kind: "h2", text: "1. Give the Foreman its identity" },
+    {
+      kind: "p",
+      text: "The Foreman is the only agent you talk to directly. It delegates to the specialists, checks their work, and brings you finished results — not half-done handoffs. Start by telling it who it is and who you are.",
+    },
+    {
+      kind: "prompt",
+      num: "1",
+      title: "Introduce the Foreman & meet the owner",
+      text: "Your name is Foreman. You are the top-level coordinator of my Pit Crew — a small team of\nAI specialists — and you operate from Telegram as the control layer. I am the owner and\nhold final authority; I can instruct you directly at any time.\n\nHere's who I am and what you're helping me with:\n- My name: [YOUR NAME]\n- What I do: [your work / business / role]\n- What I'm working on right now: [current focus or goals]\n- My time zone and rough working hours: [e.g. CET, 9-6, evenings off]\n- People I must never drop the ball on: [key clients or collaborators]\n\nYou coordinate four specialists on my behalf: RADAR (research and monitoring), QUILL\n(writing and content), WRENCH (engineering, automation, and the dashboard we'll build),\nand LEDGER (numbers, tracking, and reporting). You take my instruction, delegate to the\nright specialist, verify the work, and return a finished result.\n\nMost importantly: you own outcomes. When a task spans several specialists, coordinate the\nwhole thing end to end and come back with something done — not a status update. Think\ncapable chief of staff, not switchboard.\n\nSave all of this to long-term memory. Confirm you've got it, and name yourself and me back\nto me in one line.",
+    },
+    { kind: "h2", text: "2. Let the Foreman interview you" },
+    {
+      kind: "prompt",
+      num: "2",
+      title: "Let the Foreman fill its own gaps",
+      text: "You now know the basics about me. Before we hire the crew, close the gaps.\n\nAsk me the follow-up questions you actually need to coordinate a great team — one at a\ntime, waiting for each answer. Think about what Radar, Quill, Wrench, and Ledger will each\nneed: my audience and voice, what I'm promoting or shipping, my goals and constraints, and\nthe tools I already use. Keep going until you understand me well enough to brief the\nspecialists, then stop.\n\nWhen you're done, summarise what you've learned and save it all to long-term memory —\nyou'll pass the relevant parts to each specialist later. Confirm once it's saved.",
+    },
+    { kind: "h2", text: "3. Install the shop rules" },
+    {
+      kind: "prompt",
+      num: "3",
+      title: "Install the permanent shop rules",
+      text: "These are your permanent operating rules. Follow them in every interaction.\n\nPROGRESS\nOn any task with more than one step, send a short status line before each step:\n[Agent]: Step X of Y — [what you're doing]. Never go silent for over 60 seconds on an\nactive task.\n\nAPPROVAL\nShow me your plan before you act on anything that sends a message, spends money, or\nchanges a file outside your own workspace.\n\nCOMMUNICATION\nShort and clear. Label options 1, 2, 3. Lead with the decision I need to make. Never open\nwith \"Great question\" or \"Certainly.\"\n\nDELEGATION\nIn one line, name the specialist you're routing to and why. Never fabricate a result — if\nsomething failed, say so plainly.\n\nConfirm all rules are saved to long-term memory.",
+    },
+    {
+      kind: "part",
+      num: 2,
+      total: 6,
+      title: "The specialist crew",
+      blurb:
+        "Create Radar, Quill, Wrench, and Ledger — each with its own memory, its own workspace, and a clear line it doesn't cross.",
+    },
+    { kind: "h2", text: "4. Hire the four specialists" },
+    {
+      kind: "prompt",
+      num: "4",
+      title: "Create the specialist crew",
+      text: "Create four specialist agents, each with its own persistent identity and memory. For each,\nwrite a short charter and save it to that agent's long-term memory.\n\nRADAR — research & monitoring. Finds sources, tracks changes, summarises what's new. Never\nwrites final content or ships code.\nQUILL — writing & content. Turns Radar's findings and my direction into drafts in my voice.\nNever invents facts; asks Radar when unsure.\nWRENCH — engineering & automation. Writes and runs code, builds the dashboard, manages the\nserver. The only agent allowed to touch the filesystem or run commands.\nLEDGER — numbers & tracking. Keeps the running record of tasks, outcomes, and metrics.\nReports; never acts on my behalf.\n\nFor each agent, confirm the charter is saved and have it introduce itself in one line.",
+    },
+    { kind: "h2", text: "5. Isolated workspaces & role boundaries" },
+    {
+      kind: "prompt",
+      num: "5",
+      title: "Give each agent its own workspace",
+      text: "Set up isolation so the crew can't step on each other.\n\n- Create a working directory per agent under /opt/pit-crew/<agent>/ (radar, quill, wrench,\n  ledger). Each agent reads and writes only inside its own directory, except Wrench, which\n  may operate across the project when I explicitly approve a plan.\n- Each agent keeps its own memory namespace — no shared memory except the logbook we build\n  in Part 4.\n- Reinforce the boundaries from the charters: only Wrench runs commands or edits files; only\n  Ledger writes to the tracking record; Radar and Quill produce text, not actions.\n\nShow me the directory tree and confirm each agent's boundary back to me in one line.",
+    },
+    { kind: "h2", text: "6. Shared crew awareness" },
+    {
+      kind: "prompt",
+      num: "6",
+      title: "Give the crew shared awareness",
+      text: "Give every agent a shared, read-only picture of the team so they can hand off well.\n\nWrite a short \"crew sheet\" — each agent's name, role, and the one thing to route to them\nfor — and load it into every agent's context. When an agent hits something outside its\nrole, it should name the right specialist and hand back to the Foreman rather than doing\nit itself.\n\nConfirm each agent can name the other three and what they're for.",
+    },
+    {
+      kind: "part",
+      num: 3,
+      total: 6,
+      title: "Telegram routing — one channel per agent",
+      blurb:
+        "Put each agent in its own Telegram topic thread so a message in the Wrench channel is answered by Wrench, not the Foreman.",
+    },
+    { kind: "h2", text: "7. Create the group and topic threads" },
+    {
+      kind: "p",
+      text: "In Telegram, create a group, enable Topics in the group settings, and add your bot as an admin. Make one topic per agent — Foreman, Radar, Quill, Wrench, Ledger — plus a General topic for broadcasts.",
+    },
+    {
+      kind: "prompt",
+      num: "7",
+      title: "Brief the crew on the routing plan",
+      text: "We're about to route each agent to its own Telegram topic thread so messages land with the\nright specialist. Here's the plan — read it back to me and flag anything unclear before we\nbuild:\n\n- One Telegram group with Topics enabled; the bot is admin.\n- One topic per agent (Foreman, Radar, Quill, Wrench, Ledger) plus General.\n- Each incoming message is routed to the agent that owns its topic thread. A message in the\n  Wrench topic is handled by Wrench; General goes to the Foreman.\n- Replies post back into the same topic they came from.\n\nConfirm the plan, then wait — I'll capture the topic thread IDs next.",
+    },
+    { kind: "h2", text: "8. Capture the thread IDs and build the router" },
+    {
+      kind: "prompt",
+      num: "8",
+      title: "Build the routing layer",
+      text: "I'll paste the numeric message_thread_id for each topic. Build the router:\n\n- A map from thread ID to agent (foreman, radar, quill, wrench, ledger).\n- On each incoming Telegram update, look up the thread ID and dispatch to that agent's\n  handler with that agent's identity and memory. Unknown thread or General -> Foreman.\n- Post every reply back into the originating message_thread_id.\n- Reject and log any update from a user id that isn't mine.\n\nHere are my thread IDs:\nForeman: [ID]  Radar: [ID]  Quill: [ID]  Wrench: [ID]  Ledger: [ID]\n\nWhen it's built, tell me in two sentences how a message in the Wrench topic reaches Wrench\nand not the Foreman.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — each channel answers as itself",
+      code: "# In the Wrench topic: \"who are you?\"  -> answers as Wrench\n# In the Radar topic:  \"who are you?\"  -> answers as Radar\n# In General:          \"who are you?\"  -> answers as Foreman",
+    },
+    { kind: "h2", text: "9. Verify true routing" },
+    {
+      kind: "prompt",
+      num: "9",
+      title: "Prove the isolation holds",
+      text: "Run a routing self-test and report a table of results:\n\n1. Post \"state your name and role in one line\" into each of the five topics.\n2. Confirm each reply comes from the correct agent, in the correct topic thread.\n3. Confirm Wrench is the only one that will offer to run a command, and Ledger the only one\n   that will offer to update the tracking record.\n\nIf any topic answers as the wrong agent, stop and show me the thread-ID map — don't try to\nself-fix the routing yet.",
+    },
+    {
+      kind: "part",
+      num: 4,
+      total: 6,
+      title: "The logbook — activity logging & memory",
+      blurb:
+        "One shared, append-only record of who did what and when — the data the Pit Board reads from, and the crew's shared memory of the day.",
+    },
+    { kind: "h2", text: "10. Create the shared logbook" },
+    {
+      kind: "prompt",
+      num: "10",
+      title: "Build the shared logbook",
+      text: "Build a shared activity logbook the whole crew writes to.\n\n- A small SQLite database at /opt/pit-crew/logbook.db with a table `events` (id, ts,\n  agent, kind, summary, detail). kind is one of: started, finished, handoff, error, note.\n- Give every agent a single helper it calls to append an event — one line per meaningful\n  action. No agent reads another's private memory; the logbook is the only shared view.\n- The Foreman writes a `handoff` event whenever it delegates, and a `finished` event when\n  it returns a result to me.\n\nAfter a test task, show me the last 10 rows of the logbook.",
+    },
+    { kind: "h2", text: "11. Nightly log rotation" },
+    {
+      kind: "prompt",
+      num: "11",
+      title: "Keep the logbook from growing forever",
+      text: "Add retention so the logbook stays healthy without me managing it.\n\n- A nightly job (cron or systemd timer) that archives events older than 30 days into\n  /opt/pit-crew/archive/logbook-YYYY-MM.db and deletes them from the live table.\n- Never touch events newer than 30 days. Log the rotation itself as a `note` event.\n\nShow me the timer and confirm the next run time.",
+    },
+    {
+      kind: "part",
+      num: 5,
+      total: 6,
+      title: "The Pit Board — live dashboard",
+      blurb:
+        "A read-only web dashboard on your VPS that renders the logbook live: who's active, the latest handoffs, and the running task list — nothing writable, so the dashboard can never break the crew.",
+    },
+    { kind: "h2", text: "12. Build the read-only data layer" },
+    {
+      kind: "p",
+      text: "The dashboard reads; it never writes. That single rule is what keeps a flaky web page from ever corrupting the crew's state.",
+    },
+    {
+      kind: "prompt",
+      num: "12",
+      title: "Build the read-only data layer",
+      text: "Have Wrench build a small read-only API for the dashboard.\n\n- A Python (FastAPI) or Node service at /opt/pit-crew/board/ that opens logbook.db in\n  READ-ONLY mode — it must never write.\n- Endpoints: GET /api/agents (each agent + last activity + active/idle), GET /api/events\n  (recent events, newest first, with a limit), GET /api/tasks (open items derived from\n  started/finished pairs).\n- Bind to localhost only; we'll expose it safely in the next step.\n\nShow me a curl of /api/agents.",
+    },
+    { kind: "h2", text: "13. Build the Pit Board and wire it live" },
+    {
+      kind: "prompt",
+      num: "13",
+      title: "One dark page, five cards",
+      text: "Build the Pit Board front end and connect it to the data layer.\n\n- A single dark dashboard page (dark navy background, panels, a gold accent, monospace\n  labels): a row of agent cards, each with name, role, and a status dot that glows green\n  when the agent acted in the last 5 minutes and is grey when idle.\n- Below the cards: a live event feed and a task list.\n- Poll the read-only API every few seconds (or use SSE) so the board updates without a\n  refresh. Read-only — no buttons that change crew state.\n\nShow me the URL to open it on my LAN, and confirm the dots update when an agent acts.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — the board is live",
+      code: "# Trigger any agent (e.g. ask Radar something in its topic)\n# Watch the Pit Board: Radar's dot goes green, a new event appears in the feed\ncurl -s http://127.0.0.1:8000/api/agents | head",
+    },
+    { kind: "h2", text: "Secure remote access" },
+    {
+      kind: "prompt",
+      num: "14",
+      title: "Reach the Pit Board safely from anywhere",
+      text: "I want to open the Pit Board from my laptop and phone without exposing it to the public\ninternet.\n\nSet up Tailscale (or an equivalent private mesh) on the VPS so only my own devices can\nreach the dashboard. Do NOT open the dashboard port on the public firewall. Once it's up,\ngive me the private URL I'll use, and confirm the public firewall still blocks the port.",
+    },
+    {
+      kind: "part",
+      num: 6,
+      total: 6,
+      title: "Troubleshooting prompts",
+      blurb: "Keep these two on hand for the failure modes this build hits most often.",
+    },
+    {
+      kind: "prompt",
+      num: "T1",
+      title: "Every channel answers as the Foreman",
+      text: "Every Telegram topic is answering as the Foreman instead of its own specialist. Diagnose\nthe router: confirm the thread-ID map matches the real message_thread_id of each topic\n(print both side by side), confirm the dispatcher reads message_thread_id and not chat_id,\nand confirm each agent handler is loaded with its own identity. Show me the mismatch before\nchanging anything.",
+    },
+    {
+      kind: "prompt",
+      num: "T2",
+      title: "The Pit Board shows stale data",
+      text: "The Pit Board isn't updating — the dots stay grey even when agents are active. Check, in\norder: that agents are actually appending to logbook.db (show the last 5 rows with\ntimestamps), that the read-only API sees the same database file the agents write, and that\nthe front end is actually polling (show me a network request). Report which link in the\nchain is broken before fixing it.",
+    },
+    {
+      kind: "note",
+      text: "That's the whole build: a Foreman who owns outcomes, four specialists routed to their own Telegram channels, a shared logbook, and a live Pit Board that shows the crew working — all read-only where it counts, so nothing on the dashboard can ever break the fleet. Point the crew at your own work and it becomes a standing team you delegate to from your pocket.",
+    },
+  ],
+
   "inbox-zero-agent": [
     {
       kind: "p",
