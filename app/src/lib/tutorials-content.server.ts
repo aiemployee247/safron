@@ -4,6 +4,196 @@ import type { TutorialBlock } from "./tutorials";
 // client components; it is served through getTutorialContent, which trims
 // gated tutorials to a preview for non-members.
 export const tutorialBlocks: Record<string, TutorialBlock[]> = {
+  "control-room-discord": [
+    {
+      kind: "p",
+      text: "By the end of this build you'll run a six-agent AI crew: a Director who takes your instructions from Telegram and owns outcomes, and five specialists — Scout (research), Scribe (writing), Rig (engineering), Tally (numbers), and Relay (comms) — each answering in its own Discord channel. A four-tab Mission Control dashboard on your VPS shows the crew working live: a Command Center, per-agent stats, a task board, and a System Monitor that tracks token usage and estimated cost per agent. Every step is a copy-paste prompt into your coding agent on the server, followed by a quick check.",
+    },
+    {
+      kind: "note",
+      text: "This is an advanced build that spans two chat platforms — Telegram for the Director, Discord for the crew. If this is your first agent-on-a-VPS project, do the Telegram Ops Bot tutorial first for the server basics.",
+    },
+    {
+      kind: "part",
+      num: 1,
+      total: 5,
+      title: "Foundation — the Director & the house rules",
+      blurb:
+        "Stand up the top-level coordinator on Telegram, let it learn who you are, and lock in the permanent rules the whole crew runs by.",
+    },
+    { kind: "h2", text: "1. Give the Director its identity" },
+    {
+      kind: "p",
+      text: "The Director is the only agent you talk to directly, and it lives on Telegram so you can reach it from your pocket. It delegates to the Discord specialists, checks their work, and returns finished results.",
+    },
+    {
+      kind: "prompt",
+      num: "1",
+      title: "Introduce the Director & meet the owner",
+      text: "Your name is Director. You are the top-level coordinator of my Control Room — a six-agent\nAI crew — and you operate from Telegram as the command layer. The five specialists live on\nDiscord, each in its own channel. I am the owner and hold final authority.\n\nHere's who I am:\n- My name: [YOUR NAME]\n- What I do: [your work / role]\n- What I'm working on right now: [current focus]\n- Time zone & working hours: [e.g. EST, 9-6]\n- People I must never drop the ball on: [key clients or collaborators]\n\nYour crew: SCOUT (research), SCRIBE (writing), RIG (engineering & the dashboard we'll build),\nTALLY (numbers & tracking), RELAY (comms & coordination across the crew). You take my\ninstruction, delegate to the right specialist on Discord, verify the work, and bring me a\nfinished result — you own outcomes, not handoffs.\n\nSave all of this to long-term memory. Confirm, and name yourself and me back to me in one line.",
+    },
+    { kind: "h2", text: "2. Let the Director interview you" },
+    {
+      kind: "prompt",
+      num: "2",
+      title: "Let the Director fill its own gaps",
+      text: "You now know the basics about me. Before we hire the crew, close the gaps.\n\nAsk me the follow-up questions you actually need to coordinate a great team — one at a time,\nwaiting for each answer. Think about what Scout, Scribe, Rig, Tally, and Relay will each need:\nmy audience and voice, what I'm shipping or promoting, my goals and constraints, and the\ntools I already use. Keep going until you understand me well enough to brief the specialists,\nthen stop and summarise what you learned. Save it all to long-term memory.",
+    },
+    { kind: "h2", text: "3. Install the house rules" },
+    {
+      kind: "prompt",
+      num: "3",
+      title: "Install the permanent house rules",
+      text: "These are your permanent operating rules. Follow them in every interaction.\n\nPROGRESS\nOn any multi-step task, send a short status line before each step:\n[Agent]: Step X of Y — [what you're doing]. Never go silent over 60 seconds on active work.\n\nAPPROVAL\nShow me your plan before you act on anything that posts publicly, spends money, or changes a\nfile outside your own workspace.\n\nCOMMUNICATION\nShort and clear. Label options 1, 2, 3. Lead with the decision I need to make. No \"Certainly\"\nor \"Great question\" openers.\n\nDELEGATION\nName the specialist you're routing to and why, in one line. Never fabricate a result.\n\nConfirm all rules are saved to long-term memory.",
+    },
+    {
+      kind: "part",
+      num: 2,
+      total: 5,
+      title: "The crew — five specialists",
+      blurb:
+        "Create Scout, Scribe, Rig, Tally, and Relay — each with its own memory, its own workspace, and a clear line it doesn't cross.",
+    },
+    { kind: "h2", text: "4. Hire the five specialists" },
+    {
+      kind: "prompt",
+      num: "4",
+      title: "Create the specialist crew",
+      text: "Create five specialist agents, each with its own persistent identity and memory. For each,\nwrite a short charter and save it to that agent's long-term memory.\n\nSCOUT — research & monitoring. Finds sources, tracks changes, summarises what's new. Never\nships code or final content.\nSCRIBE — writing & content. Turns Scout's findings and my direction into drafts in my voice.\nNever invents facts; asks Scout when unsure.\nRIG — engineering & automation. Writes and runs code, builds the dashboard, manages the\nserver. The only agent allowed to touch the filesystem or run commands.\nTALLY — numbers & tracking. Keeps the running record of tasks, outcomes, and metrics.\nReports; never acts on my behalf.\nRELAY — comms & coordination. Keeps the crew in sync, drafts summaries for the Director, and\nrelays cross-agent handoffs. Never overrides the Director.\n\nFor each agent, confirm the charter is saved and have it introduce itself in one line.",
+    },
+    { kind: "h2", text: "5. Isolated workspaces & role boundaries" },
+    {
+      kind: "prompt",
+      num: "5",
+      title: "Give each agent its own workspace",
+      text: "Set up isolation so the crew can't step on each other.\n\n- Create a working directory per agent under /opt/control-room/<agent>/ (scout, scribe, rig,\n  tally, relay). Each agent reads and writes only inside its own directory, except Rig, which\n  may operate across the project when I explicitly approve a plan.\n- Each agent keeps its own memory namespace — no shared memory except the logbook we build\n  in Part 4.\n- Reinforce the boundaries: only Rig runs commands or edits files; only Tally writes to the\n  tracking record; Scout and Scribe produce text, not actions.\n\nShow me the directory tree and confirm each agent's boundary in one line.",
+    },
+    { kind: "h2", text: "6. Shared crew awareness" },
+    {
+      kind: "prompt",
+      num: "6",
+      title: "Give the crew shared awareness",
+      text: "Give every agent a shared, read-only picture of the team so they hand off well.\n\nWrite a short \"crew sheet\" — each agent's name, role, and the one thing to route to them for —\nand load it into every agent's context. When an agent hits something outside its role, it names\nthe right specialist and hands back to the Director rather than doing it itself.\n\nConfirm each agent can name the other four and what they're for.",
+    },
+    {
+      kind: "part",
+      num: 3,
+      total: 5,
+      title: "Discord — server, channels & bindings",
+      blurb:
+        "Wire the crew to Discord, give each specialist its own channel in a tidy category, and bind each agent so a message in #rig is answered by Rig.",
+    },
+    { kind: "h2", text: "7. Wire the crew to Discord" },
+    {
+      kind: "p",
+      text: "In Discord, create (or pick) a server where you're admin. In the Developer Portal, make a bot application, copy its token, enable the Message Content intent, and invite the bot to your server with permission to read and send messages.",
+    },
+    {
+      kind: "prompt",
+      num: "7",
+      title: "Connect the crew to Discord",
+      text: "Wire the Control Room crew to my Discord server using a bot.\n\n- Read the DISCORD_BOT_TOKEN from /opt/control-room/.env.\n- Connect with the Message Content intent enabled.\n- Owner lock: only obey messages from my Discord user id (DISCORD_OWNER_ID in .env) — ignore\n  everyone else silently.\n- For now, add one command: posting \"roll call\" in any channel makes the bot reply\n  \"Control Room online\" so I can confirm the connection and permissions.\n\nShow me how to run it and how to verify the owner lock with a second account.",
+    },
+    { kind: "h2", text: "8. Create the channels & category groups" },
+    {
+      kind: "prompt",
+      num: "8",
+      title: "Create channels & categories",
+      text: "Help me lay out the Discord server for the crew.\n\n- One text channel per specialist: #scout, #scribe, #rig, #tally, #relay, plus a #director-bridge\n  channel for broadcasts.\n- Group them into two categories: \"CREW\" (the five specialists) and \"CONTROL\" (director-bridge\n  and a #logs channel).\n- Tell me the exact steps to create these in Discord, then how to capture each channel's numeric\n  channel ID (I'll paste them for the next step).",
+    },
+    { kind: "h2", text: "9. Bind each agent to its channel" },
+    {
+      kind: "prompt",
+      num: "9",
+      title: "Build the channel router",
+      text: "I'll paste the numeric channel id for each specialist channel. Build the router:\n\n- A map from channel id to agent (scout, scribe, rig, tally, relay).\n- On each incoming message, look up the channel id and dispatch to that agent's handler with\n  that agent's identity and memory. Messages in #director-bridge go to the Director bridge.\n- Reply in the same channel the message came from. Reject anything from a non-owner id.\n\nChannel ids:\nScout: [ID]  Scribe: [ID]  Rig: [ID]  Tally: [ID]  Relay: [ID]\n\nThen explain in two sentences how a message in #rig reaches Rig and not the Director.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — each channel answers as itself",
+      code: "# In #rig:    \"who are you?\"  -> answers as Rig\n# In #scout:  \"who are you?\"  -> answers as Scout\n# From a non-owner account in any channel -> silence",
+    },
+    {
+      kind: "part",
+      num: 4,
+      total: 5,
+      title: "The logbook — logging & token-cost capture",
+      blurb:
+        "One shared, append-only record of who did what — and how many tokens it cost. This is the data the System Monitor tab reads.",
+    },
+    { kind: "h2", text: "10. Create the shared logbook" },
+    {
+      kind: "prompt",
+      num: "10",
+      title: "Build the shared logbook",
+      text: "Build a shared activity logbook the whole crew writes to.\n\n- A SQLite database at /opt/control-room/logbook.db with a table `events` (id, ts, agent, kind,\n  summary, detail). kind is one of: started, finished, handoff, error, note.\n- Give every agent one helper it calls to append an event — one line per meaningful action.\n- The Director writes a `handoff` event when it delegates and a `finished` event when it returns\n  a result to me.\n\nAfter a test task, show me the last 10 rows.",
+    },
+    { kind: "h2", text: "11. Capture token usage & cost" },
+    {
+      kind: "p",
+      text: "This is what powers the System Monitor. On every model call, record how many tokens went in and out, and compute an estimated cost — so the dashboard can show spend per agent.",
+    },
+    {
+      kind: "prompt",
+      num: "11",
+      title: "Log tokens and estimated cost per call",
+      text: "Extend the logbook so every agent's model call records its token usage.\n\n- When an agent finishes a turn, read the input and output token counts from the model\n  response's usage field.\n- Compute an estimated cost using per-million-token prices from PRICE_IN and PRICE_OUT in\n  .env (default $3 in / $15 out per million).\n- Store it in the `finished` event's detail column as JSON: {\"in\": N, \"out\": N, \"cost\": N,\n  \"model\": \"...\"}.\n\nRun a test turn and show me the detail JSON that was written.",
+    },
+    {
+      kind: "part",
+      num: 5,
+      total: 5,
+      title: "Mission Control — the four-tab dashboard",
+      blurb:
+        "A read-only dashboard on your VPS with four tabs — Command Center, Agents, Tasks, and a System Monitor that charts token usage and cost per agent. Read-only where it counts, so it can never break the crew.",
+    },
+    { kind: "h2", text: "12. Build the read-only data layer" },
+    {
+      kind: "prompt",
+      num: "12",
+      title: "Build the read-only data layer",
+      text: "Have Rig build a small read-only API for the dashboard.\n\n- A service at /opt/control-room/board/ that opens logbook.db in READ-ONLY mode — never writes.\n- Endpoints: /api/stats (agents active, turns today, cost today, errors today, tokens, model),\n  /api/agents (each agent + status + turns + cost), /api/events (recent, newest first),\n  /api/tasks (open items and today's finished items).\n- Bind to localhost only; we expose it privately in the last step.\n\nShow me a curl of /api/stats.",
+    },
+    { kind: "h2", text: "13. Wire the four tabs live" },
+    {
+      kind: "prompt",
+      num: "13",
+      title: "Build the four-tab dashboard",
+      text: "Build the Mission Control front end and connect it to the data layer.\n\n- A single dark page (navy background, gold accent, monospace labels) with four tabs:\n  1. COMMAND CENTER — KPI tiles (agents active, turns today, est. cost today, errors) + a live\n     event feed + crew status.\n  2. AGENTS — a card per specialist: name, status dot (green if active in the last 5 min), turns,\n     and cost.\n  3. TASKS — two columns: In Progress and Done Today.\n  4. SYSTEM MONITOR — model in use, tokens in/out today, total cost, and a per-agent table of\n     turns, tokens, and estimated cost with usage bars.\n- Poll the read-only API every few seconds. Read-only — no controls that change crew state.\n\nGive me the URL to open it on my LAN.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — the dashboard is live",
+      code: "# Trigger any agent (post in #scout)\n# Watch Mission Control: Scout's dot goes green, a new event appears,\n# and the System Monitor's cost ticks up.\ncurl -s http://127.0.0.1:8787/api/stats | head",
+    },
+    { kind: "h2", text: "14. Secure remote access" },
+    {
+      kind: "prompt",
+      num: "14",
+      title: "Reach Mission Control safely from anywhere",
+      text: "I want to open Mission Control from my laptop and phone without exposing it to the public\ninternet. Set up Tailscale (or an equivalent private mesh) on the VPS so only my own devices\ncan reach the dashboard. Do NOT open the dashboard port on the public firewall. Give me the\nprivate URL and confirm the public firewall still blocks the port.",
+    },
+    { kind: "h2", text: "Troubleshooting" },
+    {
+      kind: "prompt",
+      num: "T1",
+      title: "Every channel answers as the Director",
+      text: "Every Discord channel is answering as the Director instead of its own specialist. Diagnose the\nrouter: confirm the channel-id map matches the real numeric ids (print both side by side),\nconfirm the dispatcher reads the message's channel id, and confirm each agent handler loads its\nown identity. Show me the mismatch before changing anything.",
+    },
+    {
+      kind: "prompt",
+      num: "T2",
+      title: "The System Monitor shows $0.00",
+      text: "The System Monitor's cost stays at zero even though the crew is active. Check, in order: that\n`finished` events are writing the detail JSON with token counts (show the last 3 rows), that the\nmodel response actually includes a usage field, and that the dashboard's /api/stats reads\njson_extract on the detail column. Report which link is broken before fixing it.",
+    },
+    {
+      kind: "note",
+      text: "That's the whole build: a Director on Telegram, five specialists on their own Discord channels, a shared logbook that captures token cost, and a four-tab Mission Control that shows the crew — and the spend — live. Point the crew at your own work and you've got a standing team with a cost dashboard, all on one small VPS.",
+    },
+  ],
+
   "pit-crew-mission-control": [
     {
       kind: "p",

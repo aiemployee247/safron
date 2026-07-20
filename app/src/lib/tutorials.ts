@@ -31,9 +31,75 @@ export type Tutorial = {
   videoId?: string;
   prereqs?: string[];
   contents?: TutorialContents[];
+  /* True only for builds that ship a one-line auto-installer script. */
+  installer?: boolean;
 };
 
 export const tutorials: Tutorial[] = [
+  {
+    slug: "control-room-discord",
+    title: "Build a Control Room — 6-Agent AI Crew on Discord with a Live Mission Control Dashboard",
+    deck: "A Director on Telegram coordinating five specialists — Scout, Scribe, Rig, Tally, and Relay — each bound to its own Discord channel, all rendered live on a four-tab Mission Control dashboard with token-cost tracking. 16 copy-paste prompts.",
+    track: "AI Agents",
+    minutes: 180,
+    level: "Advanced",
+    gated: true,
+    cover: "/assets/tutorial-inbox.png",
+    date: "Jul 2026",
+    builders: "3.4k",
+    prereqs: [
+      "A VPS with Claude Code (or another capable coding agent) installed",
+      "Node 20 or newer on the box",
+      "An Anthropic API key for the crew's model calls",
+      "A Discord server where you have admin rights, plus a bot token",
+      "A Telegram account for the Director agent",
+      "Basic comfort with SSH and the command line",
+      "About 2–3 hours of focused setup time",
+    ],
+    contents: [
+      {
+        part: "Part 01 / 05 — Foundation — the Director & the house rules",
+        steps: [
+          "Give the Director its identity",
+          "Let the Director interview you",
+          "Install the house rules",
+        ],
+      },
+      {
+        part: "Part 02 / 05 — The crew — five specialists",
+        steps: [
+          "Hire Scout, Scribe, Rig, Tally & Relay",
+          "Isolated workspaces & role boundaries",
+          "Shared crew awareness",
+        ],
+      },
+      {
+        part: "Part 03 / 05 — Discord — server, channels & bindings",
+        steps: [
+          "Wire the crew to your Discord server",
+          "Create the channels & category groups",
+          "Bind each agent to its channel, then verify",
+        ],
+      },
+      {
+        part: "Part 04 / 05 — The logbook — logging & token-cost capture",
+        steps: [
+          "Create the shared logbook",
+          "Teach every agent to log its turns",
+          "Capture token usage & cost per call",
+        ],
+      },
+      {
+        part: "Part 05 / 05 — Mission Control — the four-tab dashboard",
+        steps: [
+          "Build the read-only data layer",
+          "Wire the four tabs live",
+          "Secure remote access",
+          "Troubleshooting prompts",
+        ],
+      },
+    ],
+  },
   {
     slug: "pit-crew-mission-control",
     title: "Build a Pit Crew — 5-Agent AI Fleet on Telegram with a Live Pit Board Dashboard",
@@ -45,6 +111,7 @@ export const tutorials: Tutorial[] = [
     cover: "/assets/tutorial-telegram.png",
     date: "Jul 2026",
     builders: "2.1k",
+    installer: true,
     prereqs: [
       "A VPS with Claude Code (or another capable coding agent) installed",
       "Node 20 or newer on the box",
@@ -117,6 +184,7 @@ export const tutorials: Tutorial[] = [
     cover: "/assets/tutorial-telegram.png",
     date: "Jul 2026",
     builders: "1.4k",
+    installer: true,
     prereqs: [
       "Any Linux server you can SSH into — a $5 VPS is fine",
       "Node 20 or newer installed on the server",

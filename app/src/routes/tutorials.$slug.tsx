@@ -71,7 +71,7 @@ function TutorialPage() {
           <span className="inline-flex items-center gap-2 rounded-md border border-line-hi bg-panel px-2.5 py-1 font-plex text-[11px] uppercase tracking-wide text-ink-dim">
             {meta.minutes} min · {meta.level}
           </span>
-          {flagship ? (
+          {meta.installer ? (
             <Link
               to="/tutorials/$slug/install"
               params={{ slug: meta.slug }}
@@ -196,13 +196,15 @@ function TutorialPage() {
                   >
                     Download all prompts (.md)
                   </a>
-                  <Link
-                    to="/tutorials/$slug/install"
-                    params={{ slug: meta.slug }}
-                    className="btn-panel px-5 py-3 text-sm font-medium"
-                  >
-                    Open the auto-installer
-                  </Link>
+                  {meta.installer ? (
+                    <Link
+                      to="/tutorials/$slug/install"
+                      params={{ slug: meta.slug }}
+                      className="btn-panel px-5 py-3 text-sm font-medium"
+                    >
+                      Open the auto-installer
+                    </Link>
+                  ) : null}
                 </>
               ) : (
                 <>

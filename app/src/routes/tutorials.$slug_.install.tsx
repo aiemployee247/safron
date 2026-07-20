@@ -7,7 +7,7 @@ export const Route = createFileRoute("/tutorials/$slug_/install")({
   loader: async ({ params }) => {
     const content = await getTutorialContent({ data: { slug: params.slug } });
     // Only flagship-format tutorials ship an installer.
-    if (!content || !content.meta.contents?.length) throw notFound();
+    if (!content || !content.meta.installer) throw notFound();
     return { meta: content.meta, viewer: content.viewer };
   },
   head: ({ loaderData }) => ({
