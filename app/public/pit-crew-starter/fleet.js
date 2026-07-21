@@ -109,7 +109,11 @@ async function runForeman(threadId, text) {
   try {
     const first = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      // Bigger budget than a plain reply: Foreman needs room to reason about
+      // who to delegate to *and* still emit the tool_use block before running
+      // out of tokens (a real failure mode seen at 1024 — it stopped mid-
+      // explanation with stop_reason "max_tokens" and never called the tool).
+      max_tokens: 2048,
       system: AGENTS.foreman.system,
       tools: DELEGATE_TOOLS,
       messages: [{ role: "user", content: text }],

@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TutorialsIndexRouteImport } from './routes/tutorials.index'
 import { Route as TutorialsSlugRouteImport } from './routes/tutorials.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
+import { Route as DemoSaffronCourtRouteImport } from './routes/demo.saffron-court'
 import { Route as TutorialsSlugInstallRouteImport } from './routes/tutorials.$slug_.install'
 import { Route as TutorialsSlugPromptsDotmdRouteImport } from './routes/tutorials.$slug.prompts[.]md'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe.webhook'
@@ -81,6 +82,11 @@ const InstallSlugRoute = InstallSlugRouteImport.update({
   path: '/install/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoSaffronCourtRoute = DemoSaffronCourtRouteImport.update({
+  id: '/demo/saffron-court',
+  path: '/demo/saffron-court',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TutorialsSlugInstallRoute = TutorialsSlugInstallRouteImport.update({
   id: '/tutorials/$slug_/install',
   path: '/tutorials/$slug/install',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/demo/saffron-court': typeof DemoSaffronCourtRoute
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/demo/saffron-court': typeof DemoSaffronCourtRoute
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials': typeof TutorialsIndexRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/demo/saffron-court': typeof DemoSaffronCourtRoute
   '/install/$slug': typeof InstallSlugRoute
   '/tutorials/$slug': typeof TutorialsSlugRouteWithChildren
   '/tutorials/': typeof TutorialsIndexRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/demo/saffron-court'
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/demo/saffron-court'
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
+    | '/demo/saffron-court'
     | '/install/$slug'
     | '/tutorials/$slug'
     | '/tutorials/'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DemoSaffronCourtRoute: typeof DemoSaffronCourtRoute
   InstallSlugRoute: typeof InstallSlugRoute
   TutorialsSlugRoute: typeof TutorialsSlugRouteWithChildren
   TutorialsIndexRoute: typeof TutorialsIndexRoute
@@ -316,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstallSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo/saffron-court': {
+      id: '/demo/saffron-court'
+      path: '/demo/saffron-court'
+      fullPath: '/demo/saffron-court'
+      preLoaderRoute: typeof DemoSaffronCourtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tutorials/$slug_/install': {
       id: '/tutorials/$slug_/install'
       path: '/tutorials/$slug/install'
@@ -387,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DemoSaffronCourtRoute: DemoSaffronCourtRoute,
   InstallSlugRoute: InstallSlugRoute,
   TutorialsSlugRoute: TutorialsSlugRouteWithChildren,
   TutorialsIndexRoute: TutorialsIndexRoute,

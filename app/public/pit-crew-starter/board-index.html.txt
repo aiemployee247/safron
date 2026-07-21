@@ -1512,6 +1512,7 @@
           });
           document.getElementById("office-lights").textContent = lit;
           document.getElementById("office-turns").textContent = stats.turnsToday ?? 0;
+          document.getElementById("office-buildings").textContent = Object.keys(buildings).length;
         } catch { /* keep last-known glow state */ }
       }
 
