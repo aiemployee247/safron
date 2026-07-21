@@ -22,7 +22,6 @@ import { Route as TutorialsSlugRouteImport } from './routes/tutorials.$slug'
 import { Route as InstallSlugRouteImport } from './routes/install.$slug'
 import { Route as TutorialsSlugInstallRouteImport } from './routes/tutorials.$slug_.install'
 import { Route as TutorialsSlugPromptsDotmdRouteImport } from './routes/tutorials.$slug.prompts[.]md'
-import { Route as TutorialsSlugBundleDotzipRouteImport } from './routes/tutorials.$slug.bundle[.]zip'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe.webhook'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api.auth.google'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
@@ -93,12 +92,6 @@ const TutorialsSlugPromptsDotmdRoute =
     path: '/prompts.md',
     getParentRoute: () => TutorialsSlugRoute,
   } as any)
-const TutorialsSlugBundleDotzipRoute =
-  TutorialsSlugBundleDotzipRouteImport.update({
-    id: '/bundle.zip',
-    path: '/bundle.zip',
-    getParentRoute: () => TutorialsSlugRoute,
-  } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -129,7 +122,6 @@ export interface FileRoutesByFullPath {
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -148,7 +140,6 @@ export interface FileRoutesByTo {
   '/tutorials': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug/install': typeof TutorialsSlugInstallRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -168,7 +159,6 @@ export interface FileRoutesById {
   '/tutorials/': typeof TutorialsIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/tutorials/$slug/bundle.zip': typeof TutorialsSlugBundleDotzipRoute
   '/tutorials/$slug/prompts.md': typeof TutorialsSlugPromptsDotmdRoute
   '/tutorials/$slug_/install': typeof TutorialsSlugInstallRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -189,7 +179,6 @@ export interface FileRouteTypes {
     | '/tutorials/'
     | '/api/auth/google'
     | '/api/stripe/webhook'
-    | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug/install'
     | '/api/auth/google/callback'
@@ -208,7 +197,6 @@ export interface FileRouteTypes {
     | '/tutorials'
     | '/api/auth/google'
     | '/api/stripe/webhook'
-    | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug/install'
     | '/api/auth/google/callback'
@@ -227,7 +215,6 @@ export interface FileRouteTypes {
     | '/tutorials/'
     | '/api/auth/google'
     | '/api/stripe/webhook'
-    | '/tutorials/$slug/bundle.zip'
     | '/tutorials/$slug/prompts.md'
     | '/tutorials/$slug_/install'
     | '/api/auth/google/callback'
@@ -343,13 +330,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorialsSlugPromptsDotmdRouteImport
       parentRoute: typeof TutorialsSlugRoute
     }
-    '/tutorials/$slug/bundle.zip': {
-      id: '/tutorials/$slug/bundle.zip'
-      path: '/bundle.zip'
-      fullPath: '/tutorials/$slug/bundle.zip'
-      preLoaderRoute: typeof TutorialsSlugBundleDotzipRouteImport
-      parentRoute: typeof TutorialsSlugRoute
-    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
@@ -375,12 +355,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface TutorialsSlugRouteChildren {
-  TutorialsSlugBundleDotzipRoute: typeof TutorialsSlugBundleDotzipRoute
   TutorialsSlugPromptsDotmdRoute: typeof TutorialsSlugPromptsDotmdRoute
 }
 
 const TutorialsSlugRouteChildren: TutorialsSlugRouteChildren = {
-  TutorialsSlugBundleDotzipRoute: TutorialsSlugBundleDotzipRoute,
   TutorialsSlugPromptsDotmdRoute: TutorialsSlugPromptsDotmdRoute,
 }
 

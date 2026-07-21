@@ -33,8 +33,6 @@ export type Tutorial = {
   contents?: TutorialContents[];
   /* True only for builds that ship a one-line auto-installer script. */
   installer?: boolean;
-  /* True for builds whose downloadable bundle includes the dashboard .html template. */
-  dashboardTemplate?: boolean;
 };
 
 export const tutorials: Tutorial[] = [
@@ -49,7 +47,6 @@ export const tutorials: Tutorial[] = [
     cover: "/assets/tutorial-inbox.png",
     date: "Jul 2026",
     builders: "3.4k",
-    dashboardTemplate: true,
     prereqs: [
       "The OpenClaw agent framework installed on your VPS (the crew runs on it)",
       "Node 20 or newer on the box",
@@ -115,7 +112,6 @@ export const tutorials: Tutorial[] = [
     date: "Jul 2026",
     builders: "2.1k",
     installer: true,
-    dashboardTemplate: true,
     prereqs: [
       "A VPS with Claude Code (or another capable coding agent) installed",
       "Node 20 or newer on the box",

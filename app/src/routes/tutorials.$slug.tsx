@@ -62,14 +62,6 @@ function TutorialPage() {
                 >
                   Download all prompts (.md)
                 </a>
-                {meta.dashboardTemplate ? (
-                  <a
-                    href={`/tutorials/${meta.slug}/bundle.zip`}
-                    className="btn-gold px-4 py-2 text-xs font-semibold uppercase tracking-wide"
-                  >
-                    Download bundle (.zip)
-                  </a>
-                ) : null}
                 <Link
                   to="/services"
                   className="btn-panel px-4 py-2 text-xs font-semibold uppercase tracking-wide"
