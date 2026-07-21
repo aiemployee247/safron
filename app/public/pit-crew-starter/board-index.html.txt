@@ -235,6 +235,100 @@
       .btn:hover { border-color: var(--gold); color: var(--gold); }
       .btn.danger:hover { border-color: var(--coral); color: var(--coral); }
       .btn:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--faint); }
+
+      /* priority badges */
+      .prio { font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 5px; flex: none; }
+      .prio-P1 { background: var(--coral-dim); color: var(--coral); border: 1px solid rgba(255,124,104,0.35); }
+      .prio-P2 { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(234,194,102,0.35); }
+      .prio-P3 { background: rgba(255,255,255,0.06); color: var(--dim); border: 1px solid var(--line-hi); }
+      .kcard[draggable="true"] { cursor: grab; }
+      .kcard.dragging { opacity: 0.4; }
+      .kcol .dropzone { min-height: 40px; border-radius: var(--r-sm); transition: background 0.15s; }
+      .kcol .dropzone.over { background: rgba(234,194,102,0.08); outline: 1px dashed var(--gold); }
+      .kfilters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+      .kfilters input {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink);
+        font-size: 12px; padding: 8px 11px; flex: 1; min-width: 160px;
+      }
+      .kfilters select {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink);
+        font-family: var(--mono); font-size: 11px; padding: 8px 11px;
+      }
+
+      /* agent detail drawer */
+      .drawer-backdrop {
+        position: fixed; inset: 0; background: rgba(3,5,10,0.6); backdrop-filter: blur(2px); z-index: 40;
+        opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      }
+      .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+      .drawer {
+        position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 92vw); background: var(--panel);
+        border-left: 1px solid var(--line-hi); z-index: 41; padding: 24px; overflow-y: auto;
+        transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+      }
+      .drawer.open { transform: translateX(0); }
+      .drawer-close {
+        position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); color: var(--dim); cursor: pointer;
+      }
+      .drawer-close:hover { color: var(--gold); border-color: var(--gold); }
+      .model-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+      .model-row:last-child { border-bottom: 0; }
+      .model-row .n { font-family: var(--mono); color: var(--ink); }
+      .model-row .c { font-family: var(--mono); color: var(--faint); }
+
+      /* chat */
+      .chat-shell { display: grid; grid-template-columns: 1fr; gap: 0; height: 68vh; min-height: 480px; }
+      @media (min-width: 820px) { .chat-shell { grid-template-columns: 220px 1fr; } }
+      .chat-roster { border-right: 1px solid var(--line); overflow-y: auto; padding-right: 10px; }
+      @media (max-width: 819px) { .chat-roster { border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 10px; display: flex; gap: 6px; overflow-x: auto; } }
+      .chat-agent-btn {
+        display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 12px; border-radius: var(--r-sm);
+        background: none; border: 1px solid transparent; color: var(--dim); cursor: pointer; margin-bottom: 4px; font-size: 13px;
+      }
+      .chat-agent-btn:hover { background: rgba(255,255,255,0.03); }
+      .chat-agent-btn.active { background: var(--gold-dim); border-color: rgba(234,194,102,0.3); color: var(--gold); font-weight: 600; }
+      .chat-col { display: flex; flex-direction: column; min-width: 0; padding-left: 16px; }
+      @media (max-width: 819px) { .chat-col { padding-left: 0; } }
+      .chat-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+      .chat-messages { flex: 1; overflow-y: auto; padding: 14px 2px; display: flex; flex-direction: column; gap: 10px; }
+      .cmsg { max-width: 80%; padding: 10px 13px; border-radius: 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+      .cmsg.user { align-self: flex-end; background: var(--gold-dim); color: var(--ink); border: 1px solid rgba(234,194,102,0.25); }
+      .cmsg.assistant { align-self: flex-start; background: rgba(255,255,255,0.04); border: 1px solid var(--line); }
+      .chat-input-row { display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .chat-input-row textarea {
+        flex: 1; resize: none; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: var(--r-sm);
+        color: var(--ink); font-family: var(--sans); font-size: 13px; padding: 10px 13px; max-height: 120px;
+      }
+      .chat-input-row textarea:focus { outline: none; border-color: var(--gold); }
+      .chat-send {
+        width: 42px; height: 42px; flex: none; border-radius: var(--r-sm); background: var(--gold); border: 0; color: var(--bg);
+        cursor: pointer; font-weight: 700; display: grid; place-items: center;
+      }
+      .chat-send:disabled { opacity: 0.4; cursor: default; }
+
+      /* content stats strip */
+      .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+      .strip-tile { background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: var(--r-md); padding: 14px 16px; }
+      .strip-tile .l { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); }
+      .strip-tile .v { font-size: 22px; font-weight: 800; margin-top: 4px; }
+      .agent-filter-chip {
+        font-family: var(--mono); font-size: 10px; text-transform: capitalize; padding: 6px 11px; border-radius: 999px;
+        border: 1px solid var(--line); color: var(--dim); background: none; cursor: pointer;
+      }
+      .agent-filter-chip.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+
+      /* service control */
+      .svc-card { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+      .svc-card:last-child { border-bottom: 0; }
+      .svc-name { font-weight: 700; min-width: 90px; }
+      .svc-actions { margin-left: auto; display: flex; gap: 8px; }
+      .svc-actions button {
+        font-family: var(--mono); font-size: 10px; text-transform: uppercase; padding: 7px 12px; border-radius: var(--r-sm);
+        background: rgba(255,255,255,0.03); border: 1px solid var(--line-hi); color: var(--dim); cursor: pointer;
+      }
+      .svc-actions button:hover { border-color: var(--gold); color: var(--gold); }
+      .svc-actions button.stop:hover { border-color: var(--coral); color: var(--coral); }
     </style>
   </head>
   <body>
@@ -250,11 +344,13 @@
       <div class="tabs" id="tabs">
         <button class="tab active" data-view="command">Command Center</button>
         <button class="tab" data-view="agents">Agents</button>
+        <button class="tab" data-view="chat">Chat</button>
         <button class="tab" data-view="tasks">Tasks</button>
         <button class="tab" data-view="monitor">System Monitor</button>
         <button class="tab" data-view="host">Host</button>
+        <button class="tab" data-view="schedule">Schedule</button>
         <button class="tab" data-view="kanban">Kanban</button>
-        <button class="tab" data-view="docs">Docs</button>
+        <button class="tab" data-view="content">Content</button>
       </div>
       <div class="topbar-right">
         <span class="clock-chip"><span class="lbl">UTC</span><span id="clock">--:--:--</span></span>
@@ -336,6 +432,26 @@
       <div class="bento" style="margin-top:14px;" id="agent-cards"></div>
     </section>
 
+    <!-- CHAT -->
+    <section class="view" id="view-chat">
+      <div class="panel rise" style="padding:0;">
+        <div class="chat-shell" style="padding:20px;">
+          <div class="chat-roster" id="chat-roster"></div>
+          <div class="chat-col">
+            <div class="chat-head">
+              <div id="chat-head-agent" style="font-weight:700;">Select an agent</div>
+              <span class="pill" id="chat-live">idle</span>
+            </div>
+            <div class="chat-messages" id="chat-messages"><div class="empty">Pick an agent on the left to start a real conversation.</div></div>
+            <div class="chat-input-row">
+              <textarea id="chat-input" rows="1" placeholder="Message the agent… (Enter to send, Shift+Enter for newline)" disabled></textarea>
+              <button class="chat-send" id="chat-send" disabled>↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TASKS -->
     <section class="view" id="view-tasks">
       <div class="bento">
@@ -383,26 +499,60 @@
       </div>
     </section>
 
+    <!-- SCHEDULE -->
+    <section class="view" id="view-schedule">
+      <div class="panel accent rise" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Service control</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:8px; max-width:60ch;">
+          Pit Crew doesn't have a cron subsystem the way some agent runtimes do — instead of scheduled jobs, it has two
+          long-running services. Start, stop, or restart them here. Actions are strictly allowlisted to these two services only.
+        </p>
+      </div>
+      <div class="panel rise" style="animation-delay:60ms">
+        <div class="panel-eyebrow"><span class="dash"></span> Fleet &amp; dashboard services</div>
+        <div id="svc-list" style="margin-top:12px;"></div>
+        <p class="empty" id="svc-note" style="margin-top:14px;"></p>
+      </div>
+    </section>
+
     <!-- KANBAN -->
     <section class="view" id="view-kanban">
       <div class="panel rise">
+        <div class="kfilters">
+          <input id="k-search" placeholder="Search cards…" />
+          <select id="k-priority-filter">
+            <option value="">All priorities</option>
+            <option value="P1">P1 — Critical</option>
+            <option value="P2">P2 — High</option>
+            <option value="P3">P3 — Normal</option>
+          </select>
+        </div>
         <div class="kanban" id="kanban-board"></div>
       </div>
     </section>
 
-    <!-- DOCS -->
-    <section class="view" id="view-docs">
+    <!-- CONTENT -->
+    <section class="view" id="view-content">
+      <div class="stats-strip">
+        <div class="strip-tile"><div class="l">Total docs</div><div class="v" id="content-total">0</div></div>
+        <div class="strip-tile"><div class="l">Agents writing</div><div class="v" id="content-agents">0</div></div>
+        <div class="strip-tile"><div class="l">Latest</div><div class="v" id="content-latest" style="font-size:14px;">—</div></div>
+      </div>
       <div class="docs">
         <div class="panel rise">
-          <div class="panel-eyebrow"><span class="dash"></span> Notes</div>
-          <div id="doc-list" style="margin-top:12px;"></div>
+          <div class="panel-eyebrow"><span class="dash"></span> Library</div>
+          <div id="content-filter" style="display:flex; flex-wrap:wrap; gap:6px; margin:12px 0;"></div>
+          <div id="doc-list"></div>
           <div class="doc-toolbar" style="margin-top:14px;">
+            <select id="doc-new-agent" style="background:var(--panel); border:1px solid var(--line); border-radius:var(--r-sm); color:var(--ink); font-size:12px; padding:9px 11px; width:100%;"></select>
+          </div>
+          <div class="doc-toolbar">
             <input id="doc-new-name" placeholder="new-note.md" />
           </div>
-          <button class="btn" id="doc-new-btn" style="width:100%;">New note</button>
+          <button class="btn" id="doc-new-btn" style="width:100%;">New doc</button>
         </div>
         <div class="panel doc-editor rise" style="animation-delay:60ms">
-          <div class="panel-eyebrow"><span class="dash"></span> <span id="doc-current">Select a note</span></div>
+          <div class="panel-eyebrow"><span class="dash"></span> <span id="doc-current">Select a document</span></div>
           <textarea id="doc-body" placeholder="Nothing selected." disabled style="margin-top:12px;"></textarea>
           <div class="doc-toolbar" style="margin-top:12px;">
             <button class="btn" id="doc-save-btn" disabled>Save</button>
@@ -415,6 +565,13 @@
     <div class="status-line">
       <span id="status">connecting…</span>
       <span class="on">● read-only fleet data</span>
+    </div>
+
+    <!-- AGENT DETAIL DRAWER -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer" id="drawer">
+      <button class="drawer-close" id="drawer-close">×</button>
+      <div id="drawer-body"><div class="empty">Loading…</div></div>
     </div>
 
     <script>
@@ -436,8 +593,45 @@
         document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + btn.dataset.view));
         if (btn.dataset.view === "host") loadHost();
         if (btn.dataset.view === "kanban") loadKanban();
-        if (btn.dataset.view === "docs") loadDocs();
+        if (btn.dataset.view === "content") loadContent();
+        if (btn.dataset.view === "chat") loadChatRoster();
+        if (btn.dataset.view === "schedule") loadSchedule();
       });
+
+      // ---- Agent detail drawer ----
+      const drawer = document.getElementById("drawer");
+      const drawerBackdrop = document.getElementById("drawer-backdrop");
+      function closeDrawer() { drawer.classList.remove("open"); drawerBackdrop.classList.remove("open"); }
+      document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+      drawerBackdrop.addEventListener("click", closeDrawer);
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+      async function openDrawer(agentKey) {
+        drawer.classList.add("open"); drawerBackdrop.classList.add("open");
+        document.getElementById("drawer-body").innerHTML = '<div class="empty">Loading…</div>';
+        const d = await fetch("/api/agent?key=" + encodeURIComponent(agentKey)).then((r) => r.json());
+        if (!d || d.error) { document.getElementById("drawer-body").innerHTML = '<div class="empty">Not found</div>'; return; }
+        document.getElementById("drawer-body").innerHTML =
+          '<div class="panel-eyebrow"><span class="dash"></span> Agent detail</div>' +
+          '<h2 style="font-size:26px; text-transform:capitalize; margin-top:8px;">' + d.name + '</h2>' +
+          '<div class="stat-sub" style="margin-top:2px;">' + d.role + '</div>' +
+          '<div class="meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;">' +
+            '<div class="meta-tile"><div class="l">Turns</div><div class="v">' + num(d.turns) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Success</div><div class="v">' + d.successRate + '%</div></div>' +
+            '<div class="meta-tile"><div class="l">Cost</div><div class="v">' + money(d.cost) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Errors</div><div class="v">' + num(d.errors) + '</div></div>' +
+          '</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span> Models used</div>' +
+          '<div style="margin-top:8px;">' + (d.models.length
+            ? d.models.map((m) => '<div class="model-row"><span class="n">' + esc(m.model) + '</span><span class="c">' + m.count + ' turns</span></div>').join("")
+            : '<div class="empty">no finished turns yet</div>') + '</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span> Recent activity</div>' +
+          '<div style="margin-top:8px;">' + (d.recent.length
+            ? d.recent.map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="k">' + e.kind + '</span><span class="s">' + esc(e.summary) + '</span></div>').join("")
+            : '<div class="empty">nothing logged yet</div>') + '</div>' +
+          (d.lastError ? '<div class="panel-eyebrow" style="margin-top:22px; color:var(--coral);"><span class="dash" style="background:var(--coral);"></span> Last error</div>' +
+            '<div class="rrow" style="margin-top:8px;"><span class="t">' + fmt(d.lastError.ts) + '</span><span class="s">' + esc(d.lastError.summary) + '</span></div>' : '');
+      }
 
       // ---- Host ----
       function fmtUptime(sec) {
@@ -461,18 +655,119 @@
         } catch { /* leave last-known values on screen */ }
       }
 
+      // ---- Chat ----
+      let chatAgent = null;
+      let roster = [];
+      async function loadChatRoster() {
+        roster = await fetch("/api/roster").then((r) => r.json());
+        document.getElementById("chat-roster").innerHTML = roster.map((a) =>
+          '<button class="chat-agent-btn' + (a.key === chatAgent ? " active" : "") + '" data-agent="' + a.key + '">' +
+            '<span class="dot"></span><span style="text-transform:capitalize;">' + a.name + '</span>' +
+          '</button>'
+        ).join("");
+        document.getElementById("chat-roster").querySelectorAll("[data-agent]").forEach((b) =>
+          b.addEventListener("click", () => openChat(b.dataset.agent)));
+      }
+      async function openChat(key) {
+        chatAgent = key;
+        document.querySelectorAll(".chat-agent-btn").forEach((b) => b.classList.toggle("active", b.dataset.agent === key));
+        const a = roster.find((r) => r.key === key);
+        document.getElementById("chat-head-agent").textContent = a ? a.name + " · " + a.role : key;
+        document.getElementById("chat-input").disabled = false;
+        document.getElementById("chat-send").disabled = false;
+        const history = await fetch("/api/chat?agent=" + encodeURIComponent(key)).then((r) => r.json());
+        renderChatMessages(history);
+      }
+      function renderChatMessages(history) {
+        const el = document.getElementById("chat-messages");
+        el.innerHTML = history.length
+          ? history.map((m) => '<div class="cmsg ' + m.role + '">' + esc(m.content) + '</div>').join("")
+          : '<div class="empty">No messages yet — say hello.</div>';
+        el.scrollTop = el.scrollHeight;
+      }
+      async function sendChatMessage() {
+        const input = document.getElementById("chat-input");
+        const text = input.value.trim();
+        if (!text || !chatAgent) return;
+        input.value = ""; input.disabled = true;
+        document.getElementById("chat-send").disabled = true;
+        document.getElementById("chat-live").textContent = "thinking…";
+        const el = document.getElementById("chat-messages");
+        if (el.querySelector(".empty")) el.innerHTML = "";
+        el.insertAdjacentHTML("beforeend", '<div class="cmsg user">' + esc(text) + '</div>');
+        el.scrollTop = el.scrollHeight;
+        try {
+          const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: chatAgent, message: text }) }).then((r) => r.json());
+          if (r.ok) {
+            el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">' + esc(r.reply.content) + '</div>');
+          } else {
+            el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">Error: ' + esc(r.error || "unknown") + '</div>');
+          }
+        } catch (err) {
+          el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">Error: ' + esc(err.message) + '</div>');
+        }
+        el.scrollTop = el.scrollHeight;
+        input.disabled = false; document.getElementById("chat-send").disabled = false;
+        document.getElementById("chat-live").textContent = "idle";
+        input.focus();
+      }
+      document.getElementById("chat-send").addEventListener("click", sendChatMessage);
+      document.getElementById("chat-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+      });
+
+      // ---- Schedule (service control) ----
+      const SERVICES = [["fleet", "Pit Crew Fleet"], ["board", "Mission Control Board"]];
+      async function loadSchedule() {
+        document.getElementById("svc-list").innerHTML = SERVICES.map(([key, label]) =>
+          '<div class="svc-card"><span class="dot active"></span><span class="svc-name">' + label + '</span>' +
+          '<span class="svc-actions">' +
+            '<button data-svc="' + key + '" data-act="restart">Restart</button>' +
+            '<button data-svc="' + key + '" data-act="stop" class="stop">Stop</button>' +
+            '<button data-svc="' + key + '" data-act="start">Start</button>' +
+          '</span></div>'
+        ).join("");
+        document.getElementById("svc-note").textContent =
+          "On Linux, restarting requires passwordless sudo for systemctl on these two units — if a click fails, that's usually why.";
+        document.getElementById("svc-list").querySelectorAll("[data-svc]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            const name = b.dataset.svc, action = b.dataset.act;
+            if (action === "stop" && !confirm("Stop " + name + "? It won't restart on its own.")) return;
+            b.disabled = true;
+            const r = await fetch("/api/service", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, action }) }).then((r) => r.json());
+            b.disabled = false;
+            if (!r.ok) alert("Failed: " + (r.error || "unknown error"));
+          }));
+      }
+
       // ---- Kanban ----
       const KCOLS = [["todo", "To do"], ["doing", "In progress"], ["done", "Done"]];
+      let kBoard = { todo: [], doing: [], done: [] };
+      function kFiltered(cards) {
+        const q = (document.getElementById("k-search").value || "").toLowerCase();
+        const p = document.getElementById("k-priority-filter").value;
+        return cards.filter((c) => (!q || c.text.toLowerCase().includes(q)) && (!p || c.priority === p));
+      }
       async function loadKanban() {
-        const board = await fetch("/api/kanban").then((r) => r.json());
+        kBoard = await fetch("/api/kanban").then((r) => r.json());
+        renderKanban();
+      }
+      function renderKanban() {
         document.getElementById("kanban-board").innerHTML = KCOLS.map(([key, label]) => {
-          const cards = (board[key] || []).map((c) =>
-            '<div class="kcard" data-id="' + c.id + '"><span class="txt">' + esc(c.text) + '</span>' +
-            (key !== "done" ? '<button data-move="' + (key === "todo" ? "doing" : "done") + '" data-id="' + c.id + '" title="Move forward">→</button>' : '') +
-            '<button data-del="' + c.id + '" title="Delete">×</button></div>'
+          const cards = kFiltered(kBoard[key] || []).map((c) =>
+            '<div class="kcard" draggable="true" data-id="' + c.id + '" data-col="' + key + '">' +
+              '<span class="prio prio-' + (c.priority || "P3") + '">' + (c.priority || "P3") + '</span>' +
+              '<span class="txt">' + esc(c.text) + '</span>' +
+              (key !== "done" ? '<button data-move="' + (key === "todo" ? "doing" : "done") + '" data-id="' + c.id + '" title="Move forward">→</button>' : '') +
+              '<button data-del="' + c.id + '" title="Delete">×</button></div>'
           ).join("") || '<div class="empty">empty</div>';
-          return '<div class="kcol"><h3>' + label + '</h3><div data-col="' + key + '">' + cards + '</div>' +
-            (key === "todo" ? '<div class="kadd"><input id="kadd-input" placeholder="Add a card…" /><button id="kadd-btn">Add</button></div>' : '') +
+          return '<div class="kcol"><h3>' + label + ' · ' + (kBoard[key] || []).length + '</h3><div class="dropzone" data-col="' + key + '">' + cards + '</div>' +
+            (key === "todo" ? '<div class="kadd"><input id="kadd-input" placeholder="Add a card…" />' +
+              '<select id="kadd-priority" style="font-family:var(--mono);font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);padding:0 8px;">' +
+                '<option value="P3">P3</option><option value="P2">P2</option><option value="P1">P1</option></select>' +
+              '<button id="kadd-btn">Add</button></div>' : '') +
             '</div>';
         }).join("");
 
@@ -493,59 +788,109 @@
           const input = document.getElementById("kadd-input");
           const text = input.value.trim();
           if (!text) return;
+          const priority = document.getElementById("kadd-priority").value;
           await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "add", column: "todo", text }) });
+            body: JSON.stringify({ action: "add", column: "todo", text, priority }) });
           input.value = "";
           loadKanban();
         });
-      }
 
-      // ---- Docs ----
-      let currentDoc = null;
-      async function loadDocs() {
-        const files = await fetch("/api/content").then((r) => r.json());
-        document.getElementById("doc-list").innerHTML = files.length
-          ? files.map((f) => '<div class="doc-item' + (f.file === currentDoc ? " active" : "") + '" data-file="' + esc(f.file) + '">' + esc(f.file) + "</div>").join("")
-          : '<div class="empty">no notes yet</div>';
-        document.getElementById("doc-list").querySelectorAll("[data-file]").forEach((el) =>
-          el.addEventListener("click", () => openDoc(el.dataset.file)));
+        // drag & drop
+        document.getElementById("kanban-board").querySelectorAll(".kcard").forEach((card) => {
+          card.addEventListener("dragstart", () => card.classList.add("dragging"));
+          card.addEventListener("dragend", () => card.classList.remove("dragging"));
+        });
+        document.getElementById("kanban-board").querySelectorAll(".dropzone").forEach((zone) => {
+          zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("over"); });
+          zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+          zone.addEventListener("drop", async (e) => {
+            e.preventDefault(); zone.classList.remove("over");
+            const dragging = document.querySelector(".kcard.dragging");
+            if (!dragging) return;
+            const id = dragging.dataset.id, to = zone.dataset.col;
+            if (dragging.dataset.col === to) return;
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "move", id, to }) });
+            loadKanban();
+          });
+        });
       }
-      async function openDoc(file) {
-        const r = await fetch("/api/content?file=" + encodeURIComponent(file)).then((r) => r.json());
-        currentDoc = file;
-        document.getElementById("doc-current").textContent = file;
+      document.getElementById("k-search").addEventListener("input", renderKanban);
+      document.getElementById("k-priority-filter").addEventListener("change", renderKanban);
+
+      // ---- Content (per-agent doc library) ----
+      let currentDoc = null; // { agent, file }
+      let contentFilterAgent = "";
+      let contentFiles = [];
+      async function ensureRoster() {
+        if (!roster.length) roster = await fetch("/api/roster").then((r) => r.json());
+        return roster;
+      }
+      async function loadContent() {
+        await ensureRoster();
+        const sel = document.getElementById("doc-new-agent");
+        if (!sel.options.length) sel.innerHTML = roster.map((a) => '<option value="' + a.key + '">' + a.name + '</option>').join("");
+
+        contentFiles = await fetch("/api/content").then((r) => r.json());
+        document.getElementById("content-total").textContent = contentFiles.length;
+        document.getElementById("content-agents").textContent = new Set(contentFiles.map((f) => f.agent)).size;
+        document.getElementById("content-latest").textContent = contentFiles[0] ? contentFiles[0].file : "—";
+
+        const chips = ['<button class="agent-filter-chip' + (contentFilterAgent === "" ? " active" : "") + '" data-af="">All</button>']
+          .concat(roster.map((a) => '<button class="agent-filter-chip' + (contentFilterAgent === a.key ? " active" : "") + '" data-af="' + a.key + '">' + a.name + '</button>'));
+        document.getElementById("content-filter").innerHTML = chips.join("");
+        document.getElementById("content-filter").querySelectorAll("[data-af]").forEach((b) =>
+          b.addEventListener("click", () => { contentFilterAgent = b.dataset.af; loadContent(); }));
+
+        renderDocList();
+      }
+      function renderDocList() {
+        const files = contentFilterAgent ? contentFiles.filter((f) => f.agent === contentFilterAgent) : contentFiles;
+        document.getElementById("doc-list").innerHTML = files.length
+          ? files.map((f) => '<div class="doc-item' + (currentDoc && f.file === currentDoc.file && f.agent === currentDoc.agent ? " active" : "") +
+              '" data-agent="' + f.agent + '" data-file="' + esc(f.file) + '"><span style="text-transform:capitalize;color:var(--faint);">' + f.agent + '</span> · ' + esc(f.file) + "</div>").join("")
+          : '<div class="empty">no docs yet</div>';
+        document.getElementById("doc-list").querySelectorAll("[data-file]").forEach((el) =>
+          el.addEventListener("click", () => openDoc(el.dataset.agent, el.dataset.file)));
+      }
+      async function openDoc(agent, file) {
+        const r = await fetch("/api/content?agent=" + encodeURIComponent(agent) + "&file=" + encodeURIComponent(file)).then((r) => r.json());
+        currentDoc = { agent, file };
+        document.getElementById("doc-current").textContent = agent + " / " + file;
         const ta = document.getElementById("doc-body");
         ta.value = r.body || "";
         ta.disabled = false;
         document.getElementById("doc-save-btn").disabled = false;
         document.getElementById("doc-delete-btn").disabled = false;
-        loadDocs();
+        renderDocList();
       }
       document.getElementById("doc-new-btn").addEventListener("click", async () => {
         const nameInput = document.getElementById("doc-new-name");
         let name = nameInput.value.trim();
         if (!name) return;
         if (!/\.(md|txt)$/.test(name)) name += ".md";
-        await fetch("/api/content?file=" + encodeURIComponent(name), { method: "POST",
+        const agent = document.getElementById("doc-new-agent").value;
+        await fetch("/api/content?agent=" + encodeURIComponent(agent) + "&file=" + encodeURIComponent(name), { method: "POST",
           headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: "" }) });
         nameInput.value = "";
-        await openDoc(name);
+        await loadContent();
+        await openDoc(agent, name);
       });
       document.getElementById("doc-save-btn").addEventListener("click", async () => {
         if (!currentDoc) return;
-        await fetch("/api/content?file=" + encodeURIComponent(currentDoc), { method: "POST",
+        await fetch("/api/content?agent=" + encodeURIComponent(currentDoc.agent) + "&file=" + encodeURIComponent(currentDoc.file), { method: "POST",
           headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: document.getElementById("doc-body").value }) });
       });
       document.getElementById("doc-delete-btn").addEventListener("click", async () => {
-        if (!currentDoc || !confirm("Delete " + currentDoc + "?")) return;
-        await fetch("/api/content?file=" + encodeURIComponent(currentDoc), { method: "DELETE" });
+        if (!currentDoc || !confirm("Delete " + currentDoc.file + "?")) return;
+        await fetch("/api/content?agent=" + encodeURIComponent(currentDoc.agent) + "&file=" + encodeURIComponent(currentDoc.file), { method: "DELETE" });
         currentDoc = null;
-        document.getElementById("doc-current").textContent = "Select a note";
+        document.getElementById("doc-current").textContent = "Select a document";
         const ta = document.getElementById("doc-body");
         ta.value = ""; ta.disabled = true;
         document.getElementById("doc-save-btn").disabled = true;
         document.getElementById("doc-delete-btn").disabled = true;
-        loadDocs();
+        loadContent();
       });
 
       function fleetRow(a) {
@@ -559,7 +904,7 @@
 
       function agentCard(a, i) {
         const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
-        return '<div class="panel agent-card b-4 rise" style="animation-delay:' + (i * 40) + 'ms">' +
+        return '<div class="panel agent-card b-4 rise" style="animation-delay:' + (i * 40) + 'ms; cursor:pointer;" data-open-agent="' + a.agent + '">' +
           '<div class="name-row">' + dot + a.agent + '</div>' +
           '<div class="role">' + (ROLES[a.agent] || "") + '</div>' +
           '<div class="meta-grid">' +
@@ -568,7 +913,7 @@
             '<div class="meta-tile"><div class="l">Tok in</div><div class="v">' + num(a.tokIn) + '</div></div>' +
             '<div class="meta-tile"><div class="l">Tok out</div><div class="v">' + num(a.tokOut) + '</div></div>' +
           '</div>' +
-          '<div class="stat-sub">last active ' + fmt(a.lastActivity) + '</div>' +
+          '<div class="stat-sub">last active ' + fmt(a.lastActivity) + ' · click for detail</div>' +
         '</div>';
       }
 
@@ -599,6 +944,8 @@
 
           document.getElementById("fleet-list").innerHTML = agents.map(fleetRow).join("");
           document.getElementById("agent-cards").innerHTML = agents.map(agentCard).join("");
+          document.getElementById("agent-cards").querySelectorAll("[data-open-agent]").forEach((el) =>
+            el.addEventListener("click", () => openDrawer(el.dataset.openAgent)));
 
           // focus ring: agent with the largest share of today's turns
           const top = agents.reduce((best, a) => (a.turns > (best?.turns || 0) ? a : best), null);

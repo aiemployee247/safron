@@ -2,26 +2,42 @@
 // Opens the logbook in READONLY mode, so a flaky dashboard can never corrupt
 // the crew's state. Binds to localhost only; expose it privately per the tutorial.
 //
-// Two small pieces of writable local state live outside the logbook: the
-// kanban board (kanban.json) and the docs browser (content/*.md|*.txt). Both
-// are plain files the crew doesn't touch, so writing to them can't corrupt
-// anything the fleet depends on.
+// Several pieces of writable local state live outside the logbook, entirely
+// separate from what the fleet depends on: the kanban board (kanban.json),
+// the docs browser (content/<agent>/*.md|*.txt), and chat history
+// (chat/<agent>.json). Chat additionally calls Anthropic directly to run a
+// real turn — those turns are logged to their own file, never to the fleet's
+// logbook.db, so a chat session can never be mistaken for real Telegram
+// activity in the fleet's own stats.
 import { createServer } from "node:http";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync, statSync } from "node:fs";
+import {
+  readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync, statSync,
+} from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join, extname } from "node:path";
-import { execFileSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { execFile, execFileSync } from "node:child_process";
 import os from "node:os";
 import Database from "better-sqlite3";
+import Anthropic from "@anthropic-ai/sdk";
+import "dotenv/config";
+
+import { AGENTS, AGENT_KEYS } from "../agents.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, "..");
 const DB_PATH = join(ROOT, "logbook.db");
 const KANBAN_PATH = join(ROOT, "kanban.json");
 const CONTENT_DIR = join(ROOT, "content");
+const CHAT_DIR = join(ROOT, "chat");
 const PORT = Number(process.env.BOARD_PORT || 8787);
+const MODEL = process.env.PIT_CREW_MODEL || "claude-sonnet-5";
 
 if (!existsSync(CONTENT_DIR)) mkdirSync(CONTENT_DIR, { recursive: true });
+if (!existsSync(CHAT_DIR)) mkdirSync(CHAT_DIR, { recursive: true });
+for (const key of AGENT_KEYS) {
+  const dir = join(CONTENT_DIR, key);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+}
 
 // The fleet process creates logbook.db on its own first boot (via logbook.js).
 // When both processes are launched together (systemd/launchd start them at
@@ -44,7 +60,7 @@ waitForLogbook();
 const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
 
 const ACTIVE_WINDOW = "-5 minutes";
-const AGENTS = ["foreman", "radar", "quill", "wrench", "ledger"];
+const ROLES = Object.fromEntries(AGENT_KEYS.map((k) => [k, AGENTS[k].role]));
 
 const qLastByAgent = db.prepare("SELECT agent, MAX(ts) AS last_ts FROM events GROUP BY agent");
 const qActive = db.prepare(
@@ -91,13 +107,20 @@ const qModel = db.prepare(
   `SELECT json_extract(detail,'$.model') AS model FROM events
    WHERE kind='finished' AND detail IS NOT NULL ORDER BY id DESC LIMIT 1`,
 );
+const qAgentEvents = db.prepare(
+  `SELECT ts, kind, summary, detail FROM events WHERE agent = ? ORDER BY id DESC LIMIT ?`,
+);
+const qAgentLastError = db.prepare(
+  `SELECT ts, summary FROM events WHERE agent = ? AND kind = 'error' ORDER BY id DESC LIMIT 1`,
+);
 
 function agentsView() {
   const last = Object.fromEntries(qLastByAgent.all().map((r) => [r.agent, r.last_ts]));
   const active = new Set(qActive.all(ACTIVE_WINDOW).map((r) => r.agent));
   const perAgent = Object.fromEntries(qPerAgent.all().map((r) => [r.agent, r]));
-  return AGENTS.map((a) => ({
+  return AGENT_KEYS.map((a) => ({
     agent: a,
+    name: AGENTS[a].name,
     lastActivity: last[a] ?? null,
     status: active.has(a) ? "active" : "idle",
     turns: perAgent[a]?.turns ?? 0,
@@ -107,11 +130,42 @@ function agentsView() {
   }));
 }
 
+function agentDetail(key) {
+  if (!AGENT_KEYS.includes(key)) return null;
+  const events = qAgentEvents.all(key, 200);
+  const finished = events.filter((e) => e.kind === "finished");
+  const modelCounts = {};
+  let cost = 0, tokIn = 0, tokOut = 0;
+  for (const e of finished) {
+    let d = {};
+    try { d = JSON.parse(e.detail || "{}"); } catch { /* ignore malformed detail */ }
+    if (d.model) modelCounts[d.model] = (modelCounts[d.model] || 0) + 1;
+    cost += Number(d.cost) || 0;
+    tokIn += Number(d.in) || 0;
+    tokOut += Number(d.out) || 0;
+  }
+  const errors = events.filter((e) => e.kind === "error").length;
+  const lastError = qAgentLastError.get(key);
+  return {
+    agent: key,
+    name: AGENTS[key].name,
+    role: AGENTS[key].role,
+    system: AGENTS[key].system,
+    turns: finished.length,
+    errors,
+    successRate: finished.length + errors > 0 ? Math.round((finished.length / (finished.length + errors)) * 100) : 100,
+    cost, tokIn, tokOut,
+    models: Object.entries(modelCounts).map(([model, count]) => ({ model, count })).sort((a, b) => b.count - a.count),
+    recent: events.slice(0, 15).map((e) => ({ ts: e.ts, kind: e.kind, summary: e.summary })),
+    lastError: lastError ? { ts: lastError.ts, summary: lastError.summary } : null,
+  };
+}
+
 function statsView() {
   const t = qTotals.get();
   const active = qActive.all(ACTIVE_WINDOW).length;
   return {
-    agentsTotal: AGENTS.length,
+    agentsTotal: AGENT_KEYS.length,
     agentsActive: active,
     turnsToday: t.turns_today,
     turnsTotal: t.turns_total,
@@ -143,8 +197,6 @@ function hostView() {
   };
 }
 
-// Best-effort scheduled-job listing. Never throws — an unavailable tool just
-// yields an empty list, since this is informational only.
 function jobsView() {
   try {
     if (process.platform === "darwin") {
@@ -178,6 +230,49 @@ function jobsView() {
 }
 
 // ---------------------------------------------------------------------------
+// Service control — restart/stop/start the crew's OWN services, and only
+// those. Strict allowlist, exact match, no string concatenation into a
+// shell — mirrors the safe-restart pattern from the Telegram Ops Bot
+// tutorial. This is the closest honest equivalent of "schedule" for a system
+// that has two long-running services rather than a cron subsystem.
+// ---------------------------------------------------------------------------
+const SERVICE_UNITS = {
+  linux: { fleet: "pit-crew-fleet", board: "pit-crew-board" },
+  darwin: { fleet: "com.agentgarage.pitcrew.fleet", board: "com.agentgarage.pitcrew.board" },
+};
+function serviceAction(name, action) {
+  return new Promise((resolve) => {
+    const units = SERVICE_UNITS[process.platform];
+    if (!units || !units[name]) return resolve({ ok: false, error: "unsupported platform" });
+    if (!["start", "stop", "restart"].includes(action)) return resolve({ ok: false, error: "bad action" });
+    const unit = units[name];
+    let cmd, args;
+    if (process.platform === "linux") {
+      cmd = "sudo"; args = ["systemctl", action, unit];
+    } else {
+      // launchd has no single "restart" verb; unload+load approximates it.
+      cmd = "launchctl";
+      args = action === "stop" ? ["unload", `${process.env.HOME}/Library/LaunchAgents/${unit}.plist`]
+        : action === "start" ? ["load", "-w", `${process.env.HOME}/Library/LaunchAgents/${unit}.plist`]
+        : null;
+    }
+    if (process.platform === "darwin" && action === "restart") {
+      const plist = `${process.env.HOME}/Library/LaunchAgents/${unit}.plist`;
+      execFile("launchctl", ["unload", plist], () => {
+        execFile("launchctl", ["load", "-w", plist], (err) => {
+          resolve(err ? { ok: false, error: err.message } : { ok: true });
+        });
+      });
+      return;
+    }
+    if (!cmd) return resolve({ ok: false, error: "unsupported action" });
+    execFile(cmd, args, { timeout: 10_000 }, (err) => {
+      resolve(err ? { ok: false, error: err.message } : { ok: true });
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Kanban — a tiny file-backed board. Not tied to the fleet; just a place for
 // the human running the crew to jot down what's queued, in flight, and done.
 // ---------------------------------------------------------------------------
@@ -197,10 +292,12 @@ function saveKanban(board) {
   writeFileSync(KANBAN_PATH, JSON.stringify(board, null, 2));
 }
 const KANBAN_COLUMNS = new Set(["todo", "doing", "done"]);
+const PRIORITIES = new Set(["P1", "P2", "P3"]);
 
 // ---------------------------------------------------------------------------
-// Content browser — a small sandboxed notes area. Filenames are validated
-// against a strict allowlist so nothing can escape CONTENT_DIR or execute.
+// Content browser — per-agent folders of plain Markdown/text files.
+// Filenames are validated against a strict allowlist so nothing can escape
+// its folder or execute.
 // ---------------------------------------------------------------------------
 function safeDocName(raw) {
   const name = String(raw || "");
@@ -208,15 +305,22 @@ function safeDocName(raw) {
   if (name.includes("..")) return null;
   return name;
 }
+function safeAgentKey(raw) {
+  return AGENT_KEYS.includes(raw) ? raw : null;
+}
 
 function contentList() {
-  return readdirSync(CONTENT_DIR)
-    .filter((f) => safeDocName(f))
-    .map((f) => {
-      const s = statSync(join(CONTENT_DIR, f));
-      return { file: f, size: s.size, modified: s.mtime.toISOString() };
-    })
-    .sort((a, b) => (a.modified < b.modified ? 1 : -1));
+  const out = [];
+  for (const agent of AGENT_KEYS) {
+    const dir = join(CONTENT_DIR, agent);
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir)) {
+      if (!safeDocName(f)) continue;
+      const s = statSync(join(dir, f));
+      out.push({ agent, file: f, size: s.size, modified: s.mtime.toISOString() });
+    }
+  }
+  return out.sort((a, b) => (a.modified < b.modified ? 1 : -1));
 }
 
 function json(res, body, status = 200) {
@@ -233,10 +337,53 @@ function readBody(req) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Chat — a real conversation with any one agent, run right from the
+// dashboard. Every send is a genuine model turn (same charter each agent
+// uses on Telegram), threaded against that agent's own saved history.
+// History lives in chat/<agent>.json — entirely separate from logbook.db,
+// so a dashboard chat session is never confused with real fleet activity in
+// the Command Center's stats.
+// ---------------------------------------------------------------------------
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
+
+function chatPath(agent) {
+  return join(CHAT_DIR, `${agent}.json`);
+}
+function loadChat(agent) {
+  const fp = chatPath(agent);
+  if (!existsSync(fp)) return [];
+  try { return JSON.parse(readFileSync(fp, "utf8")); } catch { return []; }
+}
+function saveChat(agent, messages) {
+  writeFileSync(chatPath(agent), JSON.stringify(messages.slice(-60), null, 2));
+}
+
+async function sendChat(agent, text) {
+  if (!anthropic) throw new Error("ANTHROPIC_API_KEY is not set");
+  const history = loadChat(agent);
+  const userMsg = { role: "user", content: text, ts: new Date().toISOString() };
+  const res = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system: AGENTS[agent].system,
+    messages: [...history, userMsg].map((m) => ({ role: m.role, content: m.content })),
+  });
+  const reply = res.content.find((b) => b.type === "text")?.text ?? "(no response)";
+  const assistantMsg = { role: "assistant", content: reply, ts: new Date().toISOString() };
+  saveChat(agent, [...history, userMsg, assistantMsg]);
+  return assistantMsg;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   try {
     if (url.pathname === "/api/agents") return json(res, agentsView());
+    if (url.pathname === "/api/agent") {
+      const key = safeAgentKey(url.searchParams.get("key"));
+      if (!key) return json(res, { error: "unknown agent" }, 404);
+      return json(res, agentDetail(key));
+    }
     if (url.pathname === "/api/stats") return json(res, statsView());
     if (url.pathname === "/api/events") {
       const limit = Math.min(Number(url.searchParams.get("limit") || 40), 200);
@@ -249,6 +396,39 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/api/host") {
       return json(res, { ...hostView(), jobs: jobsView() });
     }
+    if (url.pathname === "/api/service" && req.method === "POST") {
+      const { name, action } = JSON.parse((await readBody(req)) || "{}");
+      const result = await serviceAction(name, action);
+      return json(res, result, result.ok ? 200 : 400);
+    }
+
+    if (url.pathname === "/api/roster") {
+      return json(res, AGENT_KEYS.map((k) => ({ key: k, name: AGENTS[k].name, role: AGENTS[k].role })));
+    }
+    if (url.pathname === "/api/chat") {
+      const key = safeAgentKey(url.searchParams.get("agent"));
+      if (req.method === "GET") {
+        if (!key) return json(res, { error: "unknown agent" }, 400);
+        return json(res, loadChat(key));
+      }
+      if (req.method === "POST") {
+        const body = JSON.parse((await readBody(req)) || "{}");
+        const agent = safeAgentKey(body.agent);
+        const text = String(body.message || "").trim().slice(0, 4000);
+        if (!agent || !text) return json(res, { error: "agent and message are required" }, 400);
+        try {
+          const reply = await sendChat(agent, text);
+          return json(res, { ok: true, reply });
+        } catch (err) {
+          return json(res, { ok: false, error: err.message }, 502);
+        }
+      }
+      if (req.method === "DELETE") {
+        if (!key) return json(res, { error: "unknown agent" }, 400);
+        saveChat(key, []);
+        return json(res, { ok: true });
+      }
+    }
 
     if (url.pathname === "/api/kanban") {
       if (req.method === "GET") return json(res, loadKanban());
@@ -256,7 +436,11 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req)) || "{}");
         const board = loadKanban();
         if (body.action === "add" && KANBAN_COLUMNS.has(body.column) && body.text) {
-          board[body.column].push({ id: Date.now().toString(36), text: String(body.text).slice(0, 200) });
+          board[body.column].push({
+            id: Date.now().toString(36),
+            text: String(body.text).slice(0, 200),
+            priority: PRIORITIES.has(body.priority) ? body.priority : "P3",
+          });
         } else if (body.action === "move" && KANBAN_COLUMNS.has(body.to) && body.id) {
           for (const col of KANBAN_COLUMNS) {
             const i = board[col].findIndex((c) => c.id === body.id);
@@ -282,12 +466,13 @@ const server = createServer(async (req, res) => {
       if (req.method === "GET" && !url.searchParams.get("file")) {
         return json(res, contentList());
       }
+      const agent = safeAgentKey(url.searchParams.get("agent"));
       const name = safeDocName(url.searchParams.get("file"));
-      if (!name) return json(res, { error: "invalid filename" }, 400);
-      const fp = join(CONTENT_DIR, name);
+      if (!agent || !name) return json(res, { error: "invalid agent or filename" }, 400);
+      const fp = join(CONTENT_DIR, agent, name);
       if (req.method === "GET") {
         if (!existsSync(fp)) return json(res, { error: "not found" }, 404);
-        return json(res, { file: name, body: readFileSync(fp, "utf8") });
+        return json(res, { agent, file: name, body: readFileSync(fp, "utf8") });
       }
       if (req.method === "POST") {
         const { body = "" } = JSON.parse((await readBody(req)) || "{}");
@@ -312,5 +497,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Pit Board on http://127.0.0.1:${PORT} (read-only fleet data; kanban + docs are locally writable)`);
+  console.log(`Pit Board on http://127.0.0.1:${PORT} (read-only fleet data; kanban/content/chat are locally writable)`);
 });
