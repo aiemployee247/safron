@@ -168,6 +168,52 @@ export const tutorials: Tutorial[] = [
     ],
   },
   {
+    slug: "hermes-agent-setup",
+    title: "Set Up Hermes Agent — An Open-Source, Self-Improving AI Agent on Your Own Server",
+    deck: "Install NousResearch's open-source Hermes Agent, connect it to Telegram or Discord, and get its local API gateway running — a solid base other builds (like our Pit Crew tutorial) can sit on top of.",
+    track: "Self-hosting",
+    minutes: 40,
+    level: "Beginner",
+    gated: false,
+    cover: "/assets/tutorial-homelab.png",
+    date: "Jul 2026",
+    builders: "890",
+    installer: true,
+    prereqs: [
+      "A Linux or macOS machine — a VPS, a homelab box, or your own laptop",
+      "About 2GB of free disk space and a stable connection",
+      "An API key for whichever model you'll point Hermes at",
+      "A Telegram or Discord account, if you want to chat with it remotely",
+      "About 20–40 minutes, most of it unattended install time",
+    ],
+    contents: [
+      {
+        part: "Part 01 / 03 — What it is, and installing it",
+        steps: [
+          "What Hermes Agent actually does",
+          "Run the official installer",
+          "Confirm the install landed",
+        ],
+      },
+      {
+        part: "Part 02 / 03 — First run — the wizard & a chat platform",
+        steps: [
+          "Walk through the setup wizard",
+          "Connect Telegram or Discord",
+          "Send it a real task",
+        ],
+      },
+      {
+        part: "Part 03 / 03 — The gateway, safety, and what's next",
+        steps: [
+          "Verify the local API gateway",
+          "Know what it can touch before you expand it",
+          "Troubleshooting prompts",
+        ],
+      },
+    ],
+  },
+  {
     slug: "inbox-zero-agent",
     title: "Inbox Zero Agent",
     deck: "An agent that reads your inbox, sorts what matters, and drafts replies you approve with one click.",

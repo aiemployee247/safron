@@ -4,6 +4,130 @@ import type { TutorialBlock } from "./tutorials";
 // client components; it is served through getTutorialContent, which trims
 // gated tutorials to a preview for non-members.
 export const tutorialBlocks: Record<string, TutorialBlock[]> = {
+  "hermes-agent-setup": [
+    {
+      kind: "p",
+      text: "Hermes Agent is an open-source project by NousResearch — not something we built, and not exclusive to this site. It's a general-purpose agent runtime: point it at a model, connect it to Telegram or Discord, and it can browse the web, run shell commands, generate images, and keep memory across sessions. This tutorial isn't about the tool's internals — NousResearch already documents those — it's about getting it running cleanly, understanding what you just gave it access to, and knowing what to build next.",
+    },
+    {
+      kind: "part",
+      num: 1,
+      total: 3,
+      title: "What it is, and installing it",
+      blurb:
+        "A straight answer to \"what does this actually do,\" then the real install — we hand off to NousResearch's own installer rather than reinventing it.",
+    },
+    { kind: "h2", text: "1. What Hermes Agent actually does" },
+    {
+      kind: "p",
+      text: "Under the hood it's a Python + Node process that holds a persistent session with an LLM of your choice, gives that model tools (shell, browser via Playwright, file access, image generation), and exposes an OpenAI-compatible API on port 8642 so other software can talk to it. The part worth pausing on: it's designed to write its own \"skills\" from tasks it completes and reuse them later. That's genuinely useful, and it's also the reason the safety section in Part 03 isn't optional reading.",
+    },
+    { kind: "h2", text: "2. Run the official installer" },
+    {
+      kind: "p",
+      text: "We don't rehost or fork the installer — you're running NousResearch's actual script, the same one their own docs link to. Our version below just adds a one-line heads-up and a confirmation prompt before it starts, since it's about to install two language runtimes and clone a repo onto your machine.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "installs Python 3.11 + uv, Node 22, and Hermes itself",
+      code: "curl -fsSL https://agent-garage.higgsfield.app/install/hermes-agent-setup | bash",
+    },
+    {
+      kind: "note",
+      text: "Prefer to run their script directly with no middleman? That's completely fine — it's the exact same install either way: curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash",
+    },
+    { kind: "h2", text: "3. Confirm the install landed" },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — the hermes command exists and reports a version",
+      code: "hermes --version\nls ~/.hermes",
+    },
+    {
+      kind: "p",
+      text: "If `hermes` isn't found, the installer likely added it to a PATH entry your current shell session hasn't picked up yet — open a new terminal (or `source` your shell profile) before troubleshooting further.",
+    },
+    {
+      kind: "part",
+      num: 2,
+      total: 3,
+      title: "First run — the wizard & a chat platform",
+      blurb:
+        "Hermes walks you through model selection and platform connections itself. Here's what to actually pay attention to while it does.",
+    },
+    { kind: "h2", text: "4. Walk through the setup wizard" },
+    {
+      kind: "p",
+      text: "Running `hermes` for the first time launches an interactive setup wizard: it asks which model provider you're using, for your API key, and which chat platforms to wire up. The one decision worth slowing down for is the working directory it proposes for shell/file access — that's the blast radius for anything it runs on your behalf. Point it at a dedicated folder, not your home directory.",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "first run — launches the wizard",
+      code: "hermes",
+    },
+    { kind: "h2", text: "5. Connect Telegram or Discord" },
+    {
+      kind: "p",
+      text: "The wizard can wire up a bot token directly. If you're doing Telegram: message @BotFather, /newbot, and paste the token in when the wizard asks. For Discord, create an application in the Discord developer portal, add a bot user, and paste that token instead. Either way, message the bot once it's running to confirm the round trip before you hand it anything real.",
+    },
+    {
+      kind: "prompt",
+      num: "1",
+      title: "Give it a real first task",
+      text: "I just connected you to Telegram/Discord for the first time. Before I hand you anything important: introduce yourself in one short message, tell me which model you're running on, and confirm what tools you currently have access to (shell, browser, file access, image generation — whichever apply). Don't take any action yet, just report your current capabilities honestly.",
+    },
+    {
+      kind: "note",
+      text: "That prompt goes to Hermes itself, not to Claude Code — you're asking the agent you just stood up to self-report before you trust it with anything.",
+    },
+    {
+      kind: "part",
+      num: 3,
+      total: 3,
+      title: "The gateway, safety, and what's next",
+      blurb:
+        "Verify the API port other tools can talk to, understand what you actually exposed, and where to take this from here.",
+    },
+    { kind: "h2", text: "6. Verify the local API gateway" },
+    {
+      kind: "p",
+      text: "Hermes runs an OpenAI-compatible API server on port 8642 once it's up, which is what lets other tools treat your Hermes instance as a model endpoint. Confirm it's actually listening before you build anything against it:",
+    },
+    {
+      kind: "code",
+      lang: "bash",
+      label: "verify — the gateway responds",
+      code: "curl -s http://127.0.0.1:8642/v1/models | head -c 200",
+    },
+    { kind: "h2", text: "7. Know what it can touch before you expand it" },
+    {
+      kind: "p",
+      text: "Shell execution and browser access are real capabilities, not demos — a Hermes instance with a broad working directory and an unreviewed skill library can do real damage to real files. Three habits worth keeping: run it under a dedicated non-root user, keep its working directory scoped to a folder you don't mind it modifying, and read new skills it writes for itself before you let it reuse them unsupervised.",
+    },
+    {
+      kind: "note",
+      text: "Want a live dashboard for whatever you build on top of this — task history, per-agent status, cost tracking? That's exactly what our Pit Crew tutorial builds from scratch, for a Telegram fleet talking to Claude directly. The dashboard pattern there (a read-only local API + a static page polling it) is a reasonable model for wiring one up in front of Hermes too.",
+    },
+    { kind: "h2", text: "Troubleshooting" },
+    {
+      kind: "prompt",
+      num: "T1",
+      title: "The gateway isn't responding",
+      text: "curl to http://127.0.0.1:8642/v1/models on this box isn't returning anything. Check whether the Hermes process is actually running, check its logs for a startup error, confirm nothing else is bound to port 8642, and tell me what's actually wrong before restarting anything.",
+    },
+    {
+      kind: "prompt",
+      num: "T2",
+      title: "It's not responding on Telegram/Discord",
+      text: "My Hermes agent isn't replying on Telegram/Discord even though the process is running. Check the bot token is still valid, check the process logs for a connection error to the platform's API, and confirm outbound network access from this box isn't blocked. Report what you find before changing any config.",
+    },
+    {
+      kind: "note",
+      text: "That's the setup: the real installer, a working chat connection, a confirmed API gateway, and a clear read on what you just gave it access to. Full docs for everything Hermes itself can do live at NousResearch's own repository — this page is the on-ramp, not a replacement for it.",
+    },
+  ],
   "control-room-discord": [
     {
       kind: "p",

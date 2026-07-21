@@ -366,6 +366,31 @@ printf '\n  Logs:  tail -f %s/logs/fleet.log\n' "$ROOT"
 printf '  Stop:  launchctl unload %s/%s.plist %s/%s.plist\n' "$PLIST_DIR" "$LABEL_FLEET" "$PLIST_DIR" "$LABEL_BOARD"
 printf '\n  Tutorial: https://agent.qepilot.com/tutorials/pit-crew-mission-control\n\n'
 `,
+  'hermes-agent-setup': String.raw`#!/usr/bin/env bash
+# Agent Garage — Hermes Agent setup
+# https://agent-garage.higgsfield.app/tutorials/hermes-agent-setup
+# Hermes Agent is an open-source project by NousResearch (github.com/NousResearch/hermes-agent),
+# not by Agent Garage. This is a thin, honest hand-off — not a fork or a rehost — to
+# their official installer. Run it directly yourself if you'd rather skip the middleman:
+#   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+set -euo pipefail
+
+echo ""
+echo "== Agent Garage -> Hermes Agent setup =="
+echo "Hermes Agent is an open-source project by NousResearch, not by Agent Garage."
+echo "This installs Python 3.11 (via uv), Node 22, and clones their repo to ~/.hermes."
+echo ""
+read -r -p "Continue and hand off to NousResearch's official installer? [Y/n] " REPLY </dev/tty || REPLY="y"
+case "$REPLY" in
+  n|N|no|NO) echo "Cancelled. No changes made."; exit 0 ;;
+esac
+
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+
+echo ""
+echo "Done. Run 'hermes' to launch the setup wizard (model, API key, Telegram/Discord)."
+echo "Tutorial: https://agent-garage.higgsfield.app/tutorials/hermes-agent-setup"
+`,
   'telegram-ops-bot': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Telegram Ops Bot
 # https://agent-garage.higgsfield.app/tutorials/telegram-ops-bot
