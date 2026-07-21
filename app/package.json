@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "typecheck:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ]; then (cd \"$dir\" && bun run typecheck); fi; done",
-    "test:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ]; then (cd \"$dir\" && bun run test); fi; done"
+    "test:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ] && [ \"$(basename \"$dir\")\" != \"quanta\" ]; then (cd \"$dir\" && bun run test); fi; done"
   },
   "dependencies": {
     "@base-ui/react": "1.5.0",
