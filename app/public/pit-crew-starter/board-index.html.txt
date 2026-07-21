@@ -1119,9 +1119,16 @@
           '</div>';
       }
 
+      // agent-cards gets fully re-rendered every tick (poll interval), which
+      // makes every card a brand-new DOM node each time. If we always attach
+      // the "rise" entrance-animation class, the browser replays it from
+      // opacity:0 on every single tick — a visible flash every few seconds.
+      // Play it once, on the very first render, and never again.
+      let agentCardsFirstRender = true;
       function agentCard(a, i) {
         const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
-        return '<div class="panel agent-card b-4 rise" style="animation-delay:' + (i * 40) + 'ms; cursor:pointer;" data-open-agent="' + a.agent + '">' +
+        const riseClass = agentCardsFirstRender ? " rise" : "";
+        return '<div class="panel agent-card b-4' + riseClass + '" style="animation-delay:' + (i * 40) + 'ms; cursor:pointer;" data-open-agent="' + a.agent + '">' +
           '<div class="name-row">' + dot + a.agent + '</div>' +
           '<div class="role">' + (ROLES[a.agent] || "") + '</div>' +
           '<div class="meta-grid">' +
@@ -1161,6 +1168,7 @@
 
           document.getElementById("fleet-list").innerHTML = agents.map(fleetRow).join("");
           document.getElementById("agent-cards").innerHTML = agents.map(agentCard).join("");
+          agentCardsFirstRender = false;
           document.getElementById("agent-cards").querySelectorAll("[data-open-agent]").forEach((el) =>
             el.addEventListener("click", () => openDrawer(el.dataset.openAgent)));
 
