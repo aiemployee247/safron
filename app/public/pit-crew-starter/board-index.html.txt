@@ -329,6 +329,21 @@
       }
       .svc-actions button:hover { border-color: var(--gold); color: var(--gold); }
       .svc-actions button.stop:hover { border-color: var(--coral); color: var(--coral); }
+
+      /* docs (help) tab */
+      .doc-jumps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .doc-jump {
+        font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 13px;
+        border-radius: 999px; border: 1px solid var(--line-hi); background: none; color: var(--dim); cursor: pointer;
+      }
+      .doc-jump:hover { color: var(--gold); border-color: var(--gold); }
+      .doc-section { scroll-margin-top: 20px; }
+      .doc-row { display: flex; flex-direction: column; gap: 4px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+      .doc-row:last-child { border-bottom: 0; }
+      @media (min-width: 720px) { .doc-row { flex-direction: row; gap: 20px; } .doc-row .k { width: 200px; flex: none; } }
+      .doc-row .k { font-weight: 600; font-size: 14px; }
+      .doc-row .v { color: var(--dim); font-size: 13px; line-height: 1.6; flex: 1; }
+      .doc-row .v .src { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); display: block; margin-top: 4px; }
     </style>
   </head>
   <body>
@@ -351,6 +366,7 @@
         <button class="tab" data-view="schedule">Schedule</button>
         <button class="tab" data-view="kanban">Kanban</button>
         <button class="tab" data-view="content">Content</button>
+        <button class="tab" data-view="docs">Docs</button>
       </div>
       <div class="topbar-right">
         <span class="clock-chip"><span class="lbl">UTC</span><span id="clock">--:--:--</span></span>
@@ -562,6 +578,100 @@
       </div>
     </section>
 
+    <!-- DOCS (in-app help) -->
+    <section class="view" id="view-docs">
+      <div class="panel hero rise" style="min-height:170px;">
+        <div class="orb"></div>
+        <div>
+          <div class="hero-status"><span class="live-dot"></span> Documentation · How this dashboard works</div>
+          <h1 style="font-size:clamp(26px,3.5vw,38px);">Know every corner.</h1>
+          <p>A plain-language guide to every tab and number on your Pit Crew dashboard — what it shows, where the data comes from, and how to use it. Nothing here is invented: every figure traces back to your real fleet activity or your own local files.</p>
+        </div>
+      </div>
+
+      <div class="doc-jumps" style="margin-top:16px;">
+        <button class="doc-jump" data-jump="doc-overview">Overview</button>
+        <button class="doc-jump" data-jump="doc-agents">Agents</button>
+        <button class="doc-jump" data-jump="doc-chat">Chat</button>
+        <button class="doc-jump" data-jump="doc-tasks">Tasks &amp; Kanban</button>
+        <button class="doc-jump" data-jump="doc-schedule">Schedule</button>
+        <button class="doc-jump" data-jump="doc-content">Content</button>
+        <button class="doc-jump" data-jump="doc-safety">Data &amp; safety</button>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-overview" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tab · Command Center</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Your fleet at a glance</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The landing screen — one live snapshot of the whole system. It refreshes on its own every few seconds.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Live status pill</div><div class="v">How many of the 5 agents have logged activity in the last 5 minutes. Flips the moment that changes.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Recent Activity</div><div class="v">A live scroll of the newest things your agents did, newest first.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Turns / cost today</div><div class="v">Every completed agent turn today, and its estimated cost from logged token counts at the per-token prices set in your <span style="font-family:var(--mono);">.env</span>.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Focus ring</div><div class="v">Which agent is carrying the largest share of today's turns — a fast read on where load is concentrated, computed live from the fleet list.</div></div>
+          <div class="doc-row"><div class="k">Fleet status &amp; errors today</div><div class="v">Per-agent turn/cost totals, and how many logged errors happened today. Zero is normal — it just means nothing failed.<span class="src">source · logbook.db</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-agents" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tab · Agents</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Every specialist, measured</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The performance view for the Foreman plus Radar, Quill, Wrench, and Ledger.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Agent cards</div><div class="v">One card per agent: role, turns, cost, and token usage. <b>Click any card</b> to open its detail drawer.</div></div>
+          <div class="doc-row"><div class="k">Detail drawer</div><div class="v">Slides in from the right: total turns, success rate, which models it ran on, its recent activity, and its last error if any. Close with ✕, Esc, or by clicking outside.<span class="src">source · logbook.db</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-chat" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tab · Chat</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">A direct line to the fleet</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Talk to any agent right from the dashboard. Every message runs a <b>real</b> turn on your model — not a canned reply — using that agent's own charter from <span style="font-family:var(--mono);">agents.js</span>.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">The roster</div><div class="v">All five agents down the left. Each keeps its own conversation history, so it remembers what you told it before.<span class="src">source · chat/&lt;agent&gt;.json</span></div></div>
+          <div class="doc-row"><div class="k">Good to know</div><div class="v">Sending a message spends tokens because it runs a live model call. Chat turns are logged separately from the fleet's own Telegram activity, so they never inflate your Command Center stats.<span class="src">requires · ANTHROPIC_API_KEY in .env</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-tasks" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tabs · Tasks &amp; Kanban</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Two different kinds of "task"</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Tasks tab</div><div class="v">Real agent work — what's currently in progress and what finished today, straight from the logbook. This is agent activity, not your own to-do list.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Kanban tab</div><div class="v">Your own board — To do / In progress / Done. Add a card with a priority (P1 critical, P2 high, P3 normal), drag it between columns, search by text, or filter by priority. Entirely separate from agent activity.<span class="src">source · kanban.json</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-schedule" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tab · Schedule</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Service control</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Pit Crew doesn't run a cron subsystem — it has two long-running services instead. This tab starts, stops, or restarts them, strictly limited to those two, nothing else.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Pit Crew Fleet</div><div class="v">The Telegram bot process that routes messages to your agents.</div></div>
+          <div class="doc-row"><div class="k">Mission Control Board</div><div class="v">This dashboard's own server — restarting it will briefly disconnect you.</div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-content" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span> Tab · Content</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Everything written to disk</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Per-agent library</div><div class="v">Each agent gets its own folder. Filter the library by agent, click a doc to read it, create new ones, edit in place, or delete.<span class="src">source · content/&lt;agent&gt;/*.md|*.txt</span></div></div>
+          <div class="doc-row"><div class="k">Stats strip</div><div class="v">Total documents, how many agents have written at least one, and the most recently modified file.</div></div>
+        </div>
+      </div>
+
+      <div class="panel accent rise doc-section" id="doc-safety">
+        <div class="panel-eyebrow"><span class="dash"></span> Under the hood · Data &amp; safety</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px; color:var(--ink);">Real data, kept separate</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Read-only on the logbook</div><div class="v">The dashboard opens logbook.db strictly read-only. It can never corrupt or change what the fleet has recorded.</div></div>
+          <div class="doc-row"><div class="k">Its own local files</div><div class="v">The only things it writes are its own: the kanban board, chat history, and your content library — all separate from the fleet's logbook.<span class="src">kanban.json · chat/ · content/</span></div></div>
+          <div class="doc-row"><div class="k">Nothing fabricated</div><div class="v">Every number traces to a real source — your logbook, your local files. No invented stats, no fake "savings" figures.</div></div>
+          <div class="doc-row"><div class="k">Private by default</div><div class="v">The server binds to 127.0.0.1 only. It is never exposed to the public internet unless you deliberately expose it yourself.</div></div>
+        </div>
+      </div>
+    </section>
+
     <div class="status-line">
       <span id="status">connecting…</span>
       <span class="on">● read-only fleet data</span>
@@ -586,6 +696,12 @@
       }
       tickClock();
       setInterval(tickClock, 1000);
+
+      document.querySelectorAll(".doc-jump").forEach((b) =>
+        b.addEventListener("click", () => {
+          const el = document.getElementById(b.dataset.jump);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }));
 
       document.getElementById("tabs").addEventListener("click", (e) => {
         const btn = e.target.closest(".tab"); if (!btn) return;
