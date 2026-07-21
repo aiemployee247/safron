@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mission Control — Agent Garage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:ital,wght@0,600;1,500;1,600&display=swap"
+    />
+    <!-- Lucide — a small, MIT-licensed icon set (not exclusive to any one
+         product, same idea as using a public font). Renders <i data-lucide="x">
+         tags into inline SVGs after the DOM is ready. -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- Three.js loads lazily (only when the Office tab is opened), via an
+         import map so the module script can just `import * as THREE from "three"`.
+         This is the one external dependency in the whole dashboard — everything
+         else here is hand-written, on purpose. -->
+    <script type="importmap">
+      { "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      } }
+    </script>
+    <style>
+      :root {
+        --bg: #080c17; --panel: #121724; --panel-hi: #1a2030; --panel-glass: rgba(18, 23, 36, 0.7);
+        --line: #272c3c; --line-hi: #3b4255; --ink: #f3f5fb; --dim: #b4b7c1; --faint: #70747f;
+        --gold: #eac266; --gold-dim: rgba(234, 194, 102, 0.14); --signal: #00c89c; --signal-dim: rgba(0, 200, 156, 0.14);
+        --iris: #ad8cff; --sky: #4bc6fa; --coral: #ff7c68; --coral-dim: rgba(255, 124, 104, 0.14);
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+        --sans: "Work Sans", system-ui, sans-serif;
+        --serif: "Fraunces", Georgia, serif;
+        --r-lg: 26px; --r-md: 16px; --r-sm: 10px;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: var(--bg); color: var(--ink); font-family: var(--sans);
+        padding: 22px 22px 56px; max-width: 1440px; margin: 0 auto;
+        background-image:
+          radial-gradient(600px 400px at 90% -5%, rgba(234, 194, 102, 0.08), transparent 60%),
+          radial-gradient(500px 380px at 5% 10%, rgba(0, 200, 156, 0.07), transparent 60%);
+        background-attachment: fixed;
+      }
+      a { color: inherit; }
+      button { font-family: inherit; }
+
+      /* ---- animations ---- */
+      @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes float-orb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(24px, -18px) scale(1.05); }
+        66% { transform: translate(-18px, 12px) scale(0.97); }
+      }
+      @keyframes pulse-ring { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(2.1); opacity: 0; } }
+      @keyframes breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+      .rise { animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+      /* ---- topbar ---- */
+      .topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 4px; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand-mark {
+        width: 34px; height: 34px; border-radius: 10px; background: var(--panel-hi); border: 1px solid var(--line-hi);
+        display: grid; place-items: center; position: relative; flex: none;
+      }
+      .brand-mark svg { width: 17px; height: 17px; color: var(--gold); }
+      .brand-mark .pulse-dot {
+        position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--signal);
+        box-shadow: 0 0 8px var(--signal); animation: breathe 3s ease-in-out infinite;
+      }
+      .brand-word { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+      .brand-word .dim { color: var(--faint); font-weight: 600; }
+      .ver-badge {
+        font-family: var(--mono); font-size: 9px; color: var(--faint); border: 1px solid var(--line); background: var(--panel);
+        padding: 3px 7px; border-radius: 6px; margin-left: 2px;
+      }
+      .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
+      .tab {
+        font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint);
+        background: none; border: 1px solid transparent; border-radius: 999px; padding: 8px 13px; cursor: pointer; transition: all 0.15s;
+      }
+      .tab:hover { color: var(--ink); background: var(--panel-hi); transform: translateY(-1px); }
+      .tab.active { color: var(--bg); background: var(--gold); font-weight: 700; }
+      .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .clock-chip {
+        font-family: var(--mono); font-size: 11px; color: var(--dim); border: 1px solid var(--line); background: var(--panel);
+        padding: 7px 11px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+      }
+      .clock-chip .lbl { color: var(--faint); font-size: 9px; letter-spacing: 0.15em; }
+      .sub-line { color: var(--dim); font-size: 13px; margin: 10px 2px 20px; }
+
+      .view { display: none; }
+      .view.active { display: block; }
+
+      /* ---- bento grid ---- */
+      .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      .b-1 { grid-column: span 12; } .b-3 { grid-column: span 12; } .b-4 { grid-column: span 12; }
+      .b-5 { grid-column: span 12; } .b-6 { grid-column: span 12; } .b-7 { grid-column: span 12; } .b-8 { grid-column: span 12; }
+      @media (min-width: 720px) {
+        .b-3 { grid-column: span 6; } .b-4 { grid-column: span 6; } .b-6 { grid-column: span 6; }
+      }
+      @media (min-width: 1024px) {
+        .b-3 { grid-column: span 3; } .b-4 { grid-column: span 4; } .b-5 { grid-column: span 5; }
+        .b-6 { grid-column: span 6; } .b-7 { grid-column: span 7; } .b-8 { grid-column: span 8; }
+      }
+
+      /* ---- card shells ---- */
+      .panel {
+        background: linear-gradient(180deg, var(--panel-hi), var(--panel)); border: 1px solid var(--line);
+        border-radius: var(--r-lg); padding: 22px; position: relative; overflow: hidden;
+      }
+      .panel.flush { padding: 0; }
+      .panel-eyebrow {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint);
+        display: flex; align-items: center; gap: 8px;
+      }
+      .panel-eyebrow .dash { width: 18px; height: 1px; background: var(--line-hi); }
+      .panel-eyebrow svg { width: 12px; height: 12px; color: var(--gold); flex: none; }
+      .accent .panel-eyebrow svg { color: var(--signal); }
+      .panel-title { font-size: 14px; color: var(--ink); margin-top: 6px; font-weight: 600; }
+      .panel { transition: border-color 0.2s, transform 0.2s; }
+      .panel:hover { border-color: var(--line-hi); }
+
+      /* hero */
+      .hero {
+        background: radial-gradient(120% 140% at 100% 0%, #1a2033 0%, #0c1120 60%); border: 1px solid var(--line-hi);
+        min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
+      }
+      .hero .orb {
+        position: absolute; width: 280px; height: 280px; border-radius: 50%; filter: blur(70px); pointer-events: none;
+        background: var(--gold); opacity: 0.18; top: -90px; right: -90px; animation: float-orb 12s ease-in-out infinite;
+      }
+      .hero .orb2 {
+        position: absolute; width: 220px; height: 220px; border-radius: 50%; filter: blur(60px); pointer-events: none;
+        background: var(--signal); opacity: 0.12; bottom: -80px; left: 10%; animation: float-orb 15s ease-in-out infinite reverse;
+      }
+      .hero-status { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); position: relative; z-index: 1; }
+      .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); position: relative; }
+      .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--signal); animation: pulse-ring 2.2s ease-out infinite; }
+      .hero h1 {
+        font-family: var(--sans); font-size: clamp(28px, 4vw, 42px); line-height: 1; letter-spacing: -0.02em;
+        margin-top: 12px; position: relative; z-index: 1; font-weight: 800;
+      }
+      .hero h1 em { font-family: var(--serif); font-style: italic; font-weight: 600; color: var(--gold); }
+      .hero p { color: var(--dim); font-size: 13px; max-width: 420px; margin-top: 10px; position: relative; z-index: 1; }
+      .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; position: relative; z-index: 1; }
+      .pill {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px;
+        border-radius: 999px; border: 1px solid var(--line-hi); color: var(--dim); background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(6px); transition: border-color 0.15s, color 0.15s;
+      }
+      .pill.on { background: var(--signal-dim); border-color: rgba(0,200,156,0.35); color: var(--signal); }
+
+      /* accent card (feed) */
+      .accent { background: linear-gradient(155deg, #1c2a2a, #0f1a18); border: 1px solid rgba(0,200,156,0.25); }
+      .accent .panel-eyebrow { color: var(--signal); } .accent .panel-eyebrow .dash { background: var(--signal); }
+
+      /* stat tiles */
+      .stat { display: flex; flex-direction: column; gap: 6px; min-height: 128px; }
+      .stat-value {
+        font-family: var(--serif); font-size: 58px; font-weight: 600; letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums; margin-top: auto; line-height: 0.95;
+      }
+      .stat-value.gold { color: var(--gold); } .stat-value.signal { color: var(--signal); } .stat-value.coral { color: var(--coral); }
+      .stat-sub { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.05em; }
+
+      /* focus ring */
+      .ring-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+      .ring-svg { width: 132px; height: 132px; }
+      .ring-pct { font-family: var(--serif); font-size: 40px; font-weight: 600; }
+      .ring-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+
+      /* rows / lists */
+      .rowlist { display: flex; flex-direction: column; }
+      .rrow { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+      .rrow:last-child { border-bottom: 0; }
+      .rrow .t { font-family: var(--mono); font-size: 10px; color: var(--faint); min-width: 58px; }
+      .rrow .a { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); min-width: 60px; }
+      .rrow .k { font-family: var(--mono); font-size: 10px; color: var(--dim); min-width: 54px; }
+      .rrow .s { color: var(--ink); flex: 1; }
+      .empty { color: var(--faint); font-size: 13px; font-family: var(--mono); padding: 6px 0; }
+
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
+      .dot.active { background: var(--signal); box-shadow: 0 0 10px var(--signal); }
+
+      /* fleet list card */
+      .fleet-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .fleet-row:last-child { border-bottom: 0; }
+      .fleet-name { font-weight: 700; text-transform: capitalize; min-width: 78px; }
+      .fleet-role { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+      .fleet-meta { margin-left: auto; display: flex; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+      .fleet-meta b { color: var(--ink); font-weight: 600; }
+
+      /* agent bento cards */
+      .agent-card { display: flex; flex-direction: column; gap: 10px; min-height: 170px; }
+      .agent-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+      .agent-card .name-row { display: flex; align-items: center; gap: 8px; font-weight: 700; text-transform: capitalize; font-size: 15px; }
+      .agent-card .role { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+      .agent-card .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+      .agent-card .meta-tile { background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 10px; }
+      .agent-card .meta-tile .l { font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+      .agent-card .meta-tile .v { font-family: var(--mono); font-size: 13px; color: var(--ink); margin-top: 2px; font-weight: 600; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th {
+        text-align: left; font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--faint); padding: 8px; border-bottom: 1px solid var(--line);
+      }
+      td { padding: 10px 8px; border-bottom: 1px solid var(--line); }
+      td.num { font-family: var(--mono); text-align: right; }
+      td.agent { text-transform: capitalize; font-weight: 600; }
+      .bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
+      .bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), #d09945); }
+
+      .status-line {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint);
+        margin-top: 24px; display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 14px;
+      }
+      .status-line .on { color: var(--signal); }
+
+      /* kanban */
+      .kanban { display: grid; gap: 14px; grid-template-columns: 1fr; }
+      @media (min-width: 820px) { .kanban { grid-template-columns: repeat(3, 1fr); } }
+      .kcol h3 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+      .kcard {
+        background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 11px 13px;
+        margin-bottom: 8px; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; transition: border-color 0.15s;
+      }
+      .kcard:hover { border-color: var(--line-hi); }
+      .kcard .txt { flex: 1; word-break: break-word; }
+      .kcard button { font-family: var(--mono); font-size: 11px; color: var(--faint); background: none; border: 0; cursor: pointer; padding: 2px 4px; }
+      .kcard button:hover { color: var(--gold); }
+      .kadd { display: flex; gap: 6px; margin-top: 10px; }
+      .kadd input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); font-size: 12px; padding: 9px 11px; }
+      .kadd input:focus { outline: none; border-color: var(--gold); }
+      .kadd button {
+        font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--signal); background: var(--signal-dim);
+        border: 1px solid rgba(0,200,156,0.3); border-radius: var(--r-sm); padding: 9px 14px; cursor: pointer;
+      }
+
+      /* docs */
+      .docs { display: grid; gap: 14px; grid-template-columns: 1fr; }
+      @media (min-width: 820px) { .docs { grid-template-columns: 240px 1fr; } }
+      .doc-item { font-family: var(--mono); font-size: 12px; padding: 9px 11px; border-radius: var(--r-sm); cursor: pointer; color: var(--dim); }
+      .doc-item:hover { background: rgba(255,255,255,0.04); }
+      .doc-item.active { background: var(--gold-dim); color: var(--gold); }
+      .doc-editor textarea {
+        width: 100%; min-height: 340px; background: rgba(0,0,0,0.2); border: 1px solid var(--line);
+        border-radius: var(--r-sm); color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 14px; resize: vertical;
+      }
+      .doc-editor textarea:focus { outline: none; border-color: var(--gold); }
+      .doc-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+      .doc-toolbar input { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); font-size: 12px; padding: 9px 11px; width: 100%; }
+      .btn {
+        font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink);
+        background: rgba(255,255,255,0.04); border: 1px solid var(--line-hi); border-radius: var(--r-sm); padding: 9px 14px; cursor: pointer; transition: all 0.15s;
+      }
+      .btn:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+      .btn.danger:hover { border-color: var(--coral); color: var(--coral); }
+      .btn:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--faint); }
+
+      /* priority badges */
+      .prio { font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 5px; flex: none; }
+      .prio-P1 { background: var(--coral-dim); color: var(--coral); border: 1px solid rgba(255,124,104,0.35); }
+      .prio-P2 { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(234,194,102,0.35); }
+      .prio-P3 { background: rgba(255,255,255,0.06); color: var(--dim); border: 1px solid var(--line-hi); }
+      .kcard[draggable="true"] { cursor: grab; }
+      .kcard.dragging { opacity: 0.4; }
+      .kcol .dropzone { min-height: 40px; border-radius: var(--r-sm); transition: background 0.15s; }
+      .kcol .dropzone.over { background: rgba(234,194,102,0.08); outline: 1px dashed var(--gold); }
+      .kfilters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+      .kfilters input {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink);
+        font-size: 12px; padding: 8px 11px; flex: 1; min-width: 160px;
+      }
+      .kfilters select {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink);
+        font-family: var(--mono); font-size: 11px; padding: 8px 11px;
+      }
+
+      /* agent detail drawer */
+      .drawer-backdrop {
+        position: fixed; inset: 0; background: rgba(3,5,10,0.6); backdrop-filter: blur(2px); z-index: 40;
+        opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      }
+      .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+      .drawer {
+        position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 92vw); background: var(--panel);
+        border-left: 1px solid var(--line-hi); z-index: 41; padding: 24px; overflow-y: auto;
+        transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+      }
+      .drawer.open { transform: translateX(0); }
+      .drawer-close {
+        position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); color: var(--dim); cursor: pointer;
+        transition: transform 0.2s, color 0.15s, border-color 0.15s;
+      }
+      .drawer-close:hover { color: var(--gold); border-color: var(--gold); transform: rotate(90deg); }
+      .model-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+      .model-row:last-child { border-bottom: 0; }
+      .model-row .n { font-family: var(--mono); color: var(--ink); }
+      .model-row .c { font-family: var(--mono); color: var(--faint); }
+
+      /* chat */
+      .chat-shell { display: grid; grid-template-columns: 1fr; gap: 0; height: 68vh; min-height: 480px; }
+      @media (min-width: 820px) { .chat-shell { grid-template-columns: 220px 1fr; } }
+      .chat-roster { border-right: 1px solid var(--line); overflow-y: auto; padding-right: 10px; }
+      @media (max-width: 819px) { .chat-roster { border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 10px; display: flex; gap: 6px; overflow-x: auto; } }
+      .chat-agent-btn {
+        display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 12px; border-radius: var(--r-sm);
+        background: none; border: 1px solid transparent; color: var(--dim); cursor: pointer; margin-bottom: 4px; font-size: 13px;
+      }
+      .chat-agent-btn:hover { background: rgba(255,255,255,0.03); }
+      .chat-agent-btn.active { background: var(--gold-dim); border-color: rgba(234,194,102,0.3); color: var(--gold); font-weight: 600; }
+      .chat-col { display: flex; flex-direction: column; min-width: 0; padding-left: 16px; }
+      @media (max-width: 819px) { .chat-col { padding-left: 0; } }
+      .chat-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+      .chat-messages { flex: 1; overflow-y: auto; padding: 14px 2px; display: flex; flex-direction: column; gap: 10px; }
+      .cmsg { max-width: 80%; padding: 10px 13px; border-radius: 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+      .cmsg.user { align-self: flex-end; background: var(--gold-dim); color: var(--ink); border: 1px solid rgba(234,194,102,0.25); }
+      .cmsg.assistant { align-self: flex-start; background: rgba(255,255,255,0.04); border: 1px solid var(--line); }
+      .chat-input-row { display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .chat-input-row textarea {
+        flex: 1; resize: none; background: rgba(0,0,0,0.2); border: 1px solid var(--line); border-radius: var(--r-sm);
+        color: var(--ink); font-family: var(--sans); font-size: 13px; padding: 10px 13px; max-height: 120px;
+      }
+      .chat-input-row textarea:focus { outline: none; border-color: var(--gold); }
+      .chat-send {
+        width: 42px; height: 42px; flex: none; border-radius: var(--r-sm); background: var(--gold); border: 0; color: var(--bg);
+        cursor: pointer; font-weight: 700; display: grid; place-items: center; transition: transform 0.2s;
+      }
+      .chat-send:hover:not(:disabled) { transform: scale(1.08) rotate(8deg); }
+      .chat-send:disabled { opacity: 0.4; cursor: default; }
+
+      /* content stats strip */
+      .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+      .strip-tile { background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: var(--r-md); padding: 14px 16px; }
+      .strip-tile .l { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); }
+      .strip-tile .v { font-size: 22px; font-weight: 800; margin-top: 4px; }
+      .agent-filter-chip {
+        font-family: var(--mono); font-size: 10px; text-transform: capitalize; padding: 6px 11px; border-radius: 999px;
+        border: 1px solid var(--line); color: var(--dim); background: none; cursor: pointer;
+      }
+      .agent-filter-chip.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+
+      /* service control */
+      .svc-card { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+      .svc-card:last-child { border-bottom: 0; }
+      .svc-name { font-weight: 700; min-width: 90px; }
+      .svc-actions { margin-left: auto; display: flex; gap: 8px; }
+      .svc-actions button {
+        font-family: var(--mono); font-size: 10px; text-transform: uppercase; padding: 7px 12px; border-radius: var(--r-sm);
+        background: rgba(255,255,255,0.03); border: 1px solid var(--line-hi); color: var(--dim); cursor: pointer;
+      }
+      .svc-actions button:hover { border-color: var(--gold); color: var(--gold); }
+      .svc-actions button.stop:hover { border-color: var(--coral); color: var(--coral); }
+
+      /* docs (help) tab */
+      .doc-jumps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .doc-jump {
+        font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 13px;
+        border-radius: 999px; border: 1px solid var(--line-hi); background: none; color: var(--dim); cursor: pointer;
+      }
+      .doc-jump:hover { color: var(--gold); border-color: var(--gold); }
+      .doc-section { scroll-margin-top: 20px; }
+      .doc-row { display: flex; flex-direction: column; gap: 4px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+      .doc-row:last-child { border-bottom: 0; }
+      @media (min-width: 720px) { .doc-row { flex-direction: row; gap: 20px; } .doc-row .k { width: 200px; flex: none; } }
+      .doc-row .k { font-weight: 600; font-size: 14px; }
+      .doc-row .v { color: var(--dim); font-size: 13px; line-height: 1.6; flex: 1; }
+      .doc-row .v .src { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); display: block; margin-top: 4px; }
+
+      /* office (3D) */
+      .office-counters { display: flex; gap: 10px; flex-wrap: wrap; }
+      .office-counter {
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-md);
+        padding: 10px 16px; backdrop-filter: blur(6px);
+      }
+      .office-counter .l { font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); }
+      .office-counter .v { font-size: 26px; font-weight: 800; margin-top: 2px; }
+      .office-canvas-wrap { position: relative; height: 560px; border-radius: var(--r-lg); overflow: hidden; margin-top: 14px; background: #04060c; }
+      .office-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+      .office-hint {
+        position: absolute; top: 14px; right: 14px; z-index: 3; display: flex; align-items: center; gap: 7px;
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim);
+        background: rgba(18,23,36,0.7); border: 1px solid var(--line-hi); padding: 8px 13px; border-radius: 999px; backdrop-filter: blur(6px);
+      }
+      .office-loading {
+        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+        color: var(--dim); z-index: 2; background: #04060c;
+      }
+      .office-loading .spin {
+        width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line-hi); border-top-color: var(--gold);
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .office-loading .t1 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+      .office-loading .t2 { font-family: var(--mono); font-size: 9px; color: var(--faint); max-width: 280px; text-align: center; }
+      .office-legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+      @media (min-width: 720px) { .office-legend { grid-template-columns: repeat(5, 1fr); } }
+      .office-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; text-transform: capitalize; }
+      .office-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+      .office-dossier {
+        position: absolute; top: 14px; left: 14px; z-index: 3; width: 220px; background: rgba(18,23,36,0.85); backdrop-filter: blur(8px);
+        border: 1px solid var(--line-hi); border-radius: var(--r-md); padding: 14px; display: none;
+      }
+      .office-dossier.show { display: block; }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span class="pulse-dot"></span>
+        </div>
+        <span class="brand-word">Pit Crew <span class="dim">Mission Control</span></span>
+        <span class="ver-badge">Agent Garage</span>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-view="command">Command Center</button>
+        <button class="tab" data-view="agents">Agents</button>
+        <button class="tab" data-view="chat">Chat</button>
+        <button class="tab" data-view="office">Office</button>
+        <button class="tab" data-view="tasks">Tasks</button>
+        <button class="tab" data-view="monitor">System Monitor</button>
+        <button class="tab" data-view="host">Host</button>
+        <button class="tab" data-view="schedule">Schedule</button>
+        <button class="tab" data-view="kanban">Kanban</button>
+        <button class="tab" data-view="content">Content</button>
+        <button class="tab" data-view="docs">Docs</button>
+      </div>
+      <div class="topbar-right">
+        <span class="clock-chip"><span class="lbl">UTC</span><span id="clock">--:--:--</span></span>
+      </div>
+    </div>
+    <div class="sub-line">Live read-only view of the crew — updates every few seconds.</div>
+
+    <!-- COMMAND CENTER -->
+    <section class="view active" id="view-command">
+      <div class="bento">
+        <div class="panel hero b-8 rise">
+          <div class="orb"></div>
+          <div class="orb2"></div>
+          <div>
+            <div class="hero-status"><span class="live-dot"></span> Live · Foreman Coordination Layer</div>
+            <h1>One Foreman.<br /><em>four specialists.</em></h1>
+            <p>The Foreman is routing tasks across Radar, Quill, Wrench &amp; Ledger — each answering in its own Telegram channel.</p>
+          </div>
+          <div class="pill-row">
+            <span class="pill on" id="hero-active-pill">— / 5 active</span>
+            <span class="pill">telegram</span>
+          </div>
+        </div>
+
+        <div class="panel accent b-4 rise" style="animation-delay:60ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="zap"></i> Recent Activity</div>
+          <div class="rowlist" id="feed-mini" style="margin-top:14px; max-height:220px; overflow:auto;"></div>
+        </div>
+
+        <div class="panel stat b-3 rise" style="animation-delay:100ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Agents active</div>
+          <div class="stat-value signal" id="kpi-active">—</div>
+          <div class="stat-sub">of 5 in the fleet</div>
+        </div>
+        <div class="panel stat b-3 rise" style="animation-delay:140ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="activity"></i> Turns today</div>
+          <div class="stat-value" id="kpi-turns">—</div>
+          <div class="stat-sub" id="kpi-turns-total">—</div>
+        </div>
+        <div class="panel stat b-3 rise" style="animation-delay:180ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="circle-dollar-sign"></i> Est. cost today</div>
+          <div class="stat-value gold" id="kpi-cost">—</div>
+          <div class="stat-sub" id="kpi-cost-total">—</div>
+        </div>
+        <div class="panel b-3 rise" style="animation-delay:220ms">
+          <div class="ring-wrap">
+            <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="target"></i> Focus</div>
+            <svg class="ring-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" stroke-width="7" />
+              <circle id="focus-arc" cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="0 264" transform="rotate(-90 50 50)" />
+            </svg>
+            <div class="ring-pct" id="focus-pct" style="margin-top:-96px;">0%</div>
+            <div class="ring-label" id="focus-agent" style="margin-top:52px;">— of turns</div>
+          </div>
+        </div>
+
+        <div class="panel b-7 rise" style="animation-delay:260ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Fleet status</div>
+          <div id="fleet-list" style="margin-top:10px;"></div>
+        </div>
+        <div class="panel b-5 rise" style="animation-delay:300ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="alert-triangle"></i> Errors today</div>
+          <div class="stat-value coral" id="kpi-errors">—</div>
+          <div class="stat-sub">tracked from the logbook — 0 is normal</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENTS -->
+    <section class="view" id="view-agents">
+      <div class="panel hero rise" style="min-height:150px;">
+        <div class="orb"></div>
+        <div>
+          <div class="hero-status"><span class="live-dot"></span> Fleet · Configuration</div>
+          <h1 style="font-size:clamp(24px,3vw,34px);">Five agents.<br /><em>one console.</em></h1>
+        </div>
+      </div>
+      <div class="bento" style="margin-top:14px;" id="agent-cards"></div>
+    </section>
+
+    <!-- CHAT -->
+    <section class="view" id="view-chat">
+      <div class="panel rise" style="padding:0;">
+        <div class="chat-shell" style="padding:20px;">
+          <div class="chat-roster" id="chat-roster"></div>
+          <div class="chat-col">
+            <div class="chat-head">
+              <div id="chat-head-agent" style="font-weight:700;">Select an agent</div>
+              <span class="pill" id="chat-live">idle</span>
+            </div>
+            <div class="chat-messages" id="chat-messages"><div class="empty">Pick an agent on the left to start a real conversation.</div></div>
+            <div class="chat-input-row">
+              <textarea id="chat-input" rows="1" placeholder="Message the agent… (Enter to send, Shift+Enter for newline)" disabled></textarea>
+              <button class="chat-send" id="chat-send" disabled>↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OFFICE (3D) -->
+    <section class="view" id="view-office">
+      <div class="panel hero rise" style="min-height:auto;">
+        <div class="orb"></div>
+        <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px; position:relative; z-index:1;">
+          <div>
+            <div class="hero-status"><span class="live-dot"></span> The Shop Floor · Live skyline</div>
+            <h1 style="font-size:clamp(28px,4vw,42px);">A shop built by<br /><em>agents.</em></h1>
+            <p>Every specialist owns a bay. The Foreman's tower sits at the centre. Lit windows mean live work. Drag to orbit, scroll to zoom, click a building to open its dossier.</p>
+          </div>
+          <div class="office-counters">
+            <div class="office-counter"><div class="l">Buildings</div><div class="v" id="office-buildings">5</div></div>
+            <div class="office-counter"><div class="l">Lights on</div><div class="v signal" id="office-lights">0</div></div>
+            <div class="office-counter"><div class="l">Turns today</div><div class="v gold" id="office-turns">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="office-canvas-wrap" id="office-canvas-wrap">
+        <div class="office-loading" id="office-loading">
+          <div class="spin"></div>
+          <div class="t1">Booting the shop floor…</div>
+          <div class="t2">First visit loads the 3D engine (~2-3s). Needs a WebGL-capable browser.</div>
+        </div>
+        <div class="office-hint">drag · scroll · click</div>
+        <div class="office-dossier" id="office-dossier"></div>
+      </div>
+
+      <div class="panel rise" style="margin-top:14px;" id="office-legend-panel">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="contact"></i> Roster</div>
+        <div class="office-legend" id="office-legend"></div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="view" id="view-tasks">
+      <div class="bento">
+        <div class="panel accent b-6 rise">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="loader-circle"></i> In progress</div>
+          <div class="rowlist" id="tasks-open" style="margin-top:14px;"></div>
+        </div>
+        <div class="panel b-6 rise" style="animation-delay:80ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="check-circle-2"></i> Done today</div>
+          <div class="rowlist" id="tasks-done" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SYSTEM MONITOR -->
+    <section class="view" id="view-monitor">
+      <div class="bento">
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="cpu"></i> Model</div><div class="stat-value" id="mon-model" style="font-size:20px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="arrow-down-circle"></i> Tokens in / today</div><div class="stat-value signal" id="mon-in" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="arrow-up-circle"></i> Tokens out / today</div><div class="stat-value signal" id="mon-out" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="circle-dollar-sign"></i> Est. cost (total)</div><div class="stat-value gold" id="mon-total" style="font-size:26px;">—</div></div>
+        <div class="panel b-1 rise" style="animation-delay:160ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="table-properties"></i> Cost &amp; usage by agent</div>
+          <table style="margin-top:14px;">
+            <thead><tr><th>Agent</th><th style="text-align:right">Turns</th><th style="text-align:right">Tokens in</th><th style="text-align:right">Tokens out</th><th style="text-align:right">Est. cost</th></tr></thead>
+            <tbody id="mon-table"></tbody>
+          </table>
+          <p class="empty" style="margin-top:14px;">Cost is an estimate from logged token counts at configured per-token prices. Not a billing source.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOST -->
+    <section class="view" id="view-host">
+      <div class="bento">
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="server"></i> Platform</div><div class="stat-value" id="host-platform" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="clock"></i> Uptime</div><div class="stat-value" id="host-uptime" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="gauge"></i> Load avg (1m)</div><div class="stat-value" id="host-load" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="memory-stick"></i> Memory used</div><div class="stat-value" id="host-mem" style="font-size:24px;">—</div></div>
+        <div class="panel b-1 rise" style="animation-delay:160ms">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="calendar-clock"></i> Scheduled jobs</div>
+          <div class="rowlist" id="host-jobs" style="margin-top:14px;"></div>
+          <p class="empty" style="margin-top:14px;">launchd on macOS, systemd on Linux — filtered to this crew's own jobs.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="view" id="view-schedule">
+      <div class="panel accent rise" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="power"></i> Service control</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:8px; max-width:60ch;">
+          Pit Crew doesn't have a cron subsystem the way some agent runtimes do — instead of scheduled jobs, it has two
+          long-running services. Start, stop, or restart them here. Actions are strictly allowlisted to these two services only.
+        </p>
+      </div>
+      <div class="panel rise" style="animation-delay:60ms">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="server"></i> Fleet &amp; dashboard services</div>
+        <div id="svc-list" style="margin-top:12px;"></div>
+        <p class="empty" id="svc-note" style="margin-top:14px;"></p>
+      </div>
+    </section>
+
+    <!-- KANBAN -->
+    <section class="view" id="view-kanban">
+      <div class="panel rise">
+        <div class="kfilters">
+          <input id="k-search" placeholder="Search cards…" />
+          <select id="k-priority-filter">
+            <option value="">All priorities</option>
+            <option value="P1">P1 — Critical</option>
+            <option value="P2">P2 — High</option>
+            <option value="P3">P3 — Normal</option>
+          </select>
+        </div>
+        <div class="kanban" id="kanban-board"></div>
+      </div>
+    </section>
+
+    <!-- CONTENT -->
+    <section class="view" id="view-content">
+      <div class="stats-strip">
+        <div class="strip-tile"><div class="l">Total docs</div><div class="v" id="content-total">0</div></div>
+        <div class="strip-tile"><div class="l">Agents writing</div><div class="v" id="content-agents">0</div></div>
+        <div class="strip-tile"><div class="l">Latest</div><div class="v" id="content-latest" style="font-size:14px;">—</div></div>
+      </div>
+      <div class="docs">
+        <div class="panel rise">
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="folder-open"></i> Library</div>
+          <div id="content-filter" style="display:flex; flex-wrap:wrap; gap:6px; margin:12px 0;"></div>
+          <div id="doc-list"></div>
+          <div class="doc-toolbar" style="margin-top:14px;">
+            <select id="doc-new-agent" style="background:var(--panel); border:1px solid var(--line); border-radius:var(--r-sm); color:var(--ink); font-size:12px; padding:9px 11px; width:100%;"></select>
+          </div>
+          <div class="doc-toolbar">
+            <input id="doc-new-name" placeholder="new-note.md" />
+          </div>
+          <button class="btn" id="doc-new-btn" style="width:100%;">New doc</button>
+        </div>
+        <div class="panel doc-editor rise" style="animation-delay:60ms">
+          <div class="panel-eyebrow"><span class="dash"></span> <span id="doc-current">Select a document</span></div>
+          <textarea id="doc-body" placeholder="Nothing selected." disabled style="margin-top:12px;"></textarea>
+          <div class="doc-toolbar" style="margin-top:12px;">
+            <button class="btn" id="doc-save-btn" disabled>Save</button>
+            <button class="btn danger" id="doc-delete-btn" disabled>Delete</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCS (in-app help) -->
+    <section class="view" id="view-docs">
+      <div class="panel hero rise" style="min-height:170px;">
+        <div class="orb"></div>
+        <div>
+          <div class="hero-status"><span class="live-dot"></span> Documentation · How this dashboard works</div>
+          <h1 style="font-size:clamp(26px,3.5vw,38px);">Know every corner.</h1>
+          <p>A plain-language guide to every tab and number on your Pit Crew dashboard — what it shows, where the data comes from, and how to use it. Nothing here is invented: every figure traces back to your real fleet activity or your own local files.</p>
+        </div>
+      </div>
+
+      <div class="doc-jumps" style="margin-top:16px;">
+        <button class="doc-jump" data-jump="doc-overview">Overview</button>
+        <button class="doc-jump" data-jump="doc-agents">Agents</button>
+        <button class="doc-jump" data-jump="doc-chat">Chat</button>
+        <button class="doc-jump" data-jump="doc-tasks">Tasks &amp; Kanban</button>
+        <button class="doc-jump" data-jump="doc-schedule">Schedule</button>
+        <button class="doc-jump" data-jump="doc-content">Content</button>
+        <button class="doc-jump" data-jump="doc-safety">Data &amp; safety</button>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-overview" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="layout-dashboard"></i> Tab · Command Center</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Your fleet at a glance</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The landing screen — one live snapshot of the whole system. It refreshes on its own every few seconds.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Live status pill</div><div class="v">How many of the 5 agents have logged activity in the last 5 minutes. Flips the moment that changes.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Recent Activity</div><div class="v">A live scroll of the newest things your agents did, newest first.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Turns / cost today</div><div class="v">Every completed agent turn today, and its estimated cost from logged token counts at the per-token prices set in your <span style="font-family:var(--mono);">.env</span>.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Focus ring</div><div class="v">Which agent is carrying the largest share of today's turns — a fast read on where load is concentrated, computed live from the fleet list.</div></div>
+          <div class="doc-row"><div class="k">Fleet status &amp; errors today</div><div class="v">Per-agent turn/cost totals, and how many logged errors happened today. Zero is normal — it just means nothing failed.<span class="src">source · logbook.db</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-agents" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Tab · Agents</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Every specialist, measured</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The performance view for the Foreman plus Radar, Quill, Wrench, and Ledger.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Agent cards</div><div class="v">One card per agent: role, turns, cost, and token usage. <b>Click any card</b> to open its detail drawer.</div></div>
+          <div class="doc-row"><div class="k">Detail drawer</div><div class="v">Slides in from the right: total turns, success rate, which models it ran on, its recent activity, and its last error if any. Close with ✕, Esc, or by clicking outside.<span class="src">source · logbook.db</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-chat" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="message-square"></i> Tab · Chat</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">A direct line to the fleet</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Talk to any agent right from the dashboard. Every message runs a <b>real</b> turn on your model — not a canned reply — using that agent's own charter from <span style="font-family:var(--mono);">agents.js</span>.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">The roster</div><div class="v">All five agents down the left. Each keeps its own conversation history, so it remembers what you told it before.<span class="src">source · chat/&lt;agent&gt;.json</span></div></div>
+          <div class="doc-row"><div class="k">Good to know</div><div class="v">Sending a message spends tokens because it runs a live model call. Chat turns are logged separately from the fleet's own Telegram activity, so they never inflate your Command Center stats.<span class="src">requires · ANTHROPIC_API_KEY in .env</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-tasks" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="list-checks"></i> Tabs · Tasks &amp; Kanban</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Two different kinds of "task"</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Tasks tab</div><div class="v">Real agent work — what's currently in progress and what finished today, straight from the logbook. This is agent activity, not your own to-do list.<span class="src">source · logbook.db</span></div></div>
+          <div class="doc-row"><div class="k">Kanban tab</div><div class="v">Your own board — To do / In progress / Done. Add a card with a priority (P1 critical, P2 high, P3 normal), drag it between columns, search by text, or filter by priority. Entirely separate from agent activity.<span class="src">source · kanban.json</span></div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-schedule" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="calendar-clock"></i> Tab · Schedule</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Service control</div>
+        <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Pit Crew doesn't run a cron subsystem — it has two long-running services instead. This tab starts, stops, or restarts them, strictly limited to those two, nothing else.</p>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Pit Crew Fleet</div><div class="v">The Telegram bot process that routes messages to your agents.</div></div>
+          <div class="doc-row"><div class="k">Mission Control Board</div><div class="v">This dashboard's own server — restarting it will briefly disconnect you.</div></div>
+        </div>
+      </div>
+
+      <div class="panel rise doc-section" id="doc-content" style="margin-bottom:14px;">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="folder-open"></i> Tab · Content</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px;">Everything written to disk</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Per-agent library</div><div class="v">Each agent gets its own folder. Filter the library by agent, click a doc to read it, create new ones, edit in place, or delete.<span class="src">source · content/&lt;agent&gt;/*.md|*.txt</span></div></div>
+          <div class="doc-row"><div class="k">Stats strip</div><div class="v">Total documents, how many agents have written at least one, and the most recently modified file.</div></div>
+        </div>
+      </div>
+
+      <div class="panel accent rise doc-section" id="doc-safety">
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="shield-check"></i> Under the hood · Data &amp; safety</div>
+        <div class="panel-title" style="font-size:20px; margin-top:8px; color:var(--ink);">Real data, kept separate</div>
+        <div style="margin-top:14px;">
+          <div class="doc-row"><div class="k">Read-only on the logbook</div><div class="v">The dashboard opens logbook.db strictly read-only. It can never corrupt or change what the fleet has recorded.</div></div>
+          <div class="doc-row"><div class="k">Its own local files</div><div class="v">The only things it writes are its own: the kanban board, chat history, and your content library — all separate from the fleet's logbook.<span class="src">kanban.json · chat/ · content/</span></div></div>
+          <div class="doc-row"><div class="k">Nothing fabricated</div><div class="v">Every number traces to a real source — your logbook, your local files. No invented stats, no fake "savings" figures.</div></div>
+          <div class="doc-row"><div class="k">Private by default</div><div class="v">The server binds to 127.0.0.1 only. It is never exposed to the public internet unless you deliberately expose it yourself.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="status-line">
+      <span id="status">connecting…</span>
+      <span class="on">● read-only fleet data</span>
+    </div>
+
+    <!-- AGENT DETAIL DRAWER -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer" id="drawer">
+      <button class="drawer-close" id="drawer-close">×</button>
+      <div id="drawer-body"><div class="empty">Loading…</div></div>
+    </div>
+
+    <script>
+      const ROLES = { foreman: "coordinator", radar: "research", quill: "writing", wrench: "engineering", ledger: "numbers" };
+      const fmt = (ts) => (ts ? ts.replace("T", " ").slice(5, 16) : "—");
+      const money = (n) => "$" + (Number(n) || 0).toFixed(Number(n) >= 1 ? 2 : 4);
+      const num = (n) => (Number(n) || 0).toLocaleString();
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+      function tickClock() {
+        document.getElementById("clock").textContent = new Date().toISOString().slice(11, 19);
+      }
+      tickClock();
+      setInterval(tickClock, 1000);
+
+      document.querySelectorAll(".doc-jump").forEach((b) =>
+        b.addEventListener("click", () => {
+          const el = document.getElementById(b.dataset.jump);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }));
+
+      document.getElementById("tabs").addEventListener("click", (e) => {
+        const btn = e.target.closest(".tab"); if (!btn) return;
+        document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
+        document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + btn.dataset.view));
+        if (btn.dataset.view === "host") loadHost();
+        if (btn.dataset.view === "kanban") loadKanban();
+        if (btn.dataset.view === "content") loadContent();
+        if (btn.dataset.view === "chat") loadChatRoster();
+        if (btn.dataset.view === "schedule") loadSchedule();
+        if (btn.dataset.view === "office" && window.initOffice) window.initOffice();
+      });
+
+      // ---- Agent detail drawer ----
+      const drawer = document.getElementById("drawer");
+      const drawerBackdrop = document.getElementById("drawer-backdrop");
+      function closeDrawer() { drawer.classList.remove("open"); drawerBackdrop.classList.remove("open"); }
+      document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+      drawerBackdrop.addEventListener("click", closeDrawer);
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+      async function openDrawer(agentKey) {
+        drawer.classList.add("open"); drawerBackdrop.classList.add("open");
+        document.getElementById("drawer-body").innerHTML = '<div class="empty">Loading…</div>';
+        const d = await fetch("/api/agent?key=" + encodeURIComponent(agentKey)).then((r) => r.json());
+        if (!d || d.error) { document.getElementById("drawer-body").innerHTML = '<div class="empty">Not found</div>'; return; }
+        document.getElementById("drawer-body").innerHTML =
+          '<div class="panel-eyebrow"><span class="dash"></span><i data-lucide="user"></i> Agent detail</div>' +
+          '<h2 style="font-size:26px; text-transform:capitalize; margin-top:8px;">' + d.name + '</h2>' +
+          '<div class="stat-sub" style="margin-top:2px;">' + d.role + '</div>' +
+          '<div class="meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;">' +
+            '<div class="meta-tile"><div class="l">Turns</div><div class="v">' + num(d.turns) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Success</div><div class="v">' + d.successRate + '%</div></div>' +
+            '<div class="meta-tile"><div class="l">Cost</div><div class="v">' + money(d.cost) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Errors</div><div class="v">' + num(d.errors) + '</div></div>' +
+          '</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span><i data-lucide="cpu"></i> Models used</div>' +
+          '<div style="margin-top:8px;">' + (d.models.length
+            ? d.models.map((m) => '<div class="model-row"><span class="n">' + esc(m.model) + '</span><span class="c">' + m.count + ' turns</span></div>').join("")
+            : '<div class="empty">no finished turns yet</div>') + '</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span><i data-lucide="activity"></i> Recent activity</div>' +
+          '<div style="margin-top:8px;">' + (d.recent.length
+            ? d.recent.map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="k">' + e.kind + '</span><span class="s">' + esc(e.summary) + '</span></div>').join("")
+            : '<div class="empty">nothing logged yet</div>') + '</div>' +
+          (d.lastError ? '<div class="panel-eyebrow" style="margin-top:22px; color:var(--coral);"><span class="dash" style="background:var(--coral);"></span><i data-lucide="alert-triangle" style="color:var(--coral);"></i> Last error</div>' +
+            '<div class="rrow" style="margin-top:8px;"><span class="t">' + fmt(d.lastError.ts) + '</span><span class="s">' + esc(d.lastError.summary) + '</span></div>' : '');
+        if (window.lucide) lucide.createIcons();
+      }
+      window.openDrawer = openDrawer; // used by the Office 3D scene's click handler
+
+      // ---- Host ----
+      function fmtUptime(sec) {
+        const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60);
+        return (d ? d + "d " : "") + h + "h " + m + "m";
+      }
+      function fmtBytes(n) {
+        const gb = n / 1024 / 1024 / 1024;
+        return gb >= 1 ? gb.toFixed(1) + " GB" : (n / 1024 / 1024).toFixed(0) + " MB";
+      }
+      async function loadHost() {
+        try {
+          const h = await fetch("/api/host").then((r) => r.json());
+          document.getElementById("host-platform").textContent = h.platform === "darwin" ? "macOS" : h.platform;
+          document.getElementById("host-uptime").textContent = fmtUptime(h.uptimeSec);
+          document.getElementById("host-load").textContent = (h.loadAvg[0] || 0).toFixed(2);
+          document.getElementById("host-mem").textContent = fmtBytes(h.memUsed) + " / " + fmtBytes(h.memTotal);
+          document.getElementById("host-jobs").innerHTML = h.jobs && h.jobs.length
+            ? h.jobs.map((j) => '<div class="rrow"><span class="a">' + esc(j.status || j.active || "") + '</span><span class="s">' + esc(j.label) + "</span></div>").join("")
+            : '<div class="empty">no jobs found for this crew</div>';
+        } catch { /* leave last-known values on screen */ }
+      }
+
+      // ---- Chat ----
+      let chatAgent = null;
+      let roster = [];
+      async function loadChatRoster() {
+        roster = await fetch("/api/roster").then((r) => r.json());
+        document.getElementById("chat-roster").innerHTML = roster.map((a) =>
+          '<button class="chat-agent-btn' + (a.key === chatAgent ? " active" : "") + '" data-agent="' + a.key + '">' +
+            '<span class="dot"></span><span style="text-transform:capitalize;">' + a.name + '</span>' +
+          '</button>'
+        ).join("");
+        document.getElementById("chat-roster").querySelectorAll("[data-agent]").forEach((b) =>
+          b.addEventListener("click", () => openChat(b.dataset.agent)));
+      }
+      async function openChat(key) {
+        chatAgent = key;
+        document.querySelectorAll(".chat-agent-btn").forEach((b) => b.classList.toggle("active", b.dataset.agent === key));
+        const a = roster.find((r) => r.key === key);
+        document.getElementById("chat-head-agent").textContent = a ? a.name + " · " + a.role : key;
+        document.getElementById("chat-input").disabled = false;
+        document.getElementById("chat-send").disabled = false;
+        const history = await fetch("/api/chat?agent=" + encodeURIComponent(key)).then((r) => r.json());
+        renderChatMessages(history);
+      }
+      function renderChatMessages(history) {
+        const el = document.getElementById("chat-messages");
+        el.innerHTML = history.length
+          ? history.map((m) => '<div class="cmsg ' + m.role + '">' + esc(m.content) + '</div>').join("")
+          : '<div class="empty">No messages yet — say hello.</div>';
+        el.scrollTop = el.scrollHeight;
+      }
+      async function sendChatMessage() {
+        const input = document.getElementById("chat-input");
+        const text = input.value.trim();
+        if (!text || !chatAgent) return;
+        input.value = ""; input.disabled = true;
+        document.getElementById("chat-send").disabled = true;
+        document.getElementById("chat-live").textContent = "thinking…";
+        const el = document.getElementById("chat-messages");
+        if (el.querySelector(".empty")) el.innerHTML = "";
+        el.insertAdjacentHTML("beforeend", '<div class="cmsg user">' + esc(text) + '</div>');
+        el.scrollTop = el.scrollHeight;
+        try {
+          const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: chatAgent, message: text }) }).then((r) => r.json());
+          if (r.ok) {
+            el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">' + esc(r.reply.content) + '</div>');
+          } else {
+            el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">Error: ' + esc(r.error || "unknown") + '</div>');
+          }
+        } catch (err) {
+          el.insertAdjacentHTML("beforeend", '<div class="cmsg assistant">Error: ' + esc(err.message) + '</div>');
+        }
+        el.scrollTop = el.scrollHeight;
+        input.disabled = false; document.getElementById("chat-send").disabled = false;
+        document.getElementById("chat-live").textContent = "idle";
+        input.focus();
+      }
+      document.getElementById("chat-send").addEventListener("click", sendChatMessage);
+      document.getElementById("chat-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+      });
+
+      // ---- Schedule (service control) ----
+      const SERVICES = [["fleet", "Pit Crew Fleet"], ["board", "Mission Control Board"]];
+      async function loadSchedule() {
+        document.getElementById("svc-list").innerHTML = SERVICES.map(([key, label]) =>
+          '<div class="svc-card"><span class="dot active"></span><span class="svc-name">' + label + '</span>' +
+          '<span class="svc-actions">' +
+            '<button data-svc="' + key + '" data-act="restart">Restart</button>' +
+            '<button data-svc="' + key + '" data-act="stop" class="stop">Stop</button>' +
+            '<button data-svc="' + key + '" data-act="start">Start</button>' +
+          '</span></div>'
+        ).join("");
+        document.getElementById("svc-note").textContent =
+          "On Linux, restarting requires passwordless sudo for systemctl on these two units — if a click fails, that's usually why.";
+        document.getElementById("svc-list").querySelectorAll("[data-svc]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            const name = b.dataset.svc, action = b.dataset.act;
+            if (action === "stop" && !confirm("Stop " + name + "? It won't restart on its own.")) return;
+            b.disabled = true;
+            const r = await fetch("/api/service", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, action }) }).then((r) => r.json());
+            b.disabled = false;
+            if (!r.ok) alert("Failed: " + (r.error || "unknown error"));
+          }));
+      }
+
+      // ---- Kanban ----
+      const KCOLS = [["todo", "To do"], ["doing", "In progress"], ["done", "Done"]];
+      let kBoard = { todo: [], doing: [], done: [] };
+      function kFiltered(cards) {
+        const q = (document.getElementById("k-search").value || "").toLowerCase();
+        const p = document.getElementById("k-priority-filter").value;
+        return cards.filter((c) => (!q || c.text.toLowerCase().includes(q)) && (!p || c.priority === p));
+      }
+      async function loadKanban() {
+        kBoard = await fetch("/api/kanban").then((r) => r.json());
+        renderKanban();
+      }
+      function renderKanban() {
+        document.getElementById("kanban-board").innerHTML = KCOLS.map(([key, label]) => {
+          const cards = kFiltered(kBoard[key] || []).map((c) =>
+            '<div class="kcard" draggable="true" data-id="' + c.id + '" data-col="' + key + '">' +
+              '<span class="prio prio-' + (c.priority || "P3") + '">' + (c.priority || "P3") + '</span>' +
+              '<span class="txt">' + esc(c.text) + '</span>' +
+              (key !== "done" ? '<button data-move="' + (key === "todo" ? "doing" : "done") + '" data-id="' + c.id + '" title="Move forward">→</button>' : '') +
+              '<button data-del="' + c.id + '" title="Delete">×</button></div>'
+          ).join("") || '<div class="empty">empty</div>';
+          return '<div class="kcol"><h3>' + label + ' · ' + (kBoard[key] || []).length + '</h3><div class="dropzone" data-col="' + key + '">' + cards + '</div>' +
+            (key === "todo" ? '<div class="kadd"><input id="kadd-input" placeholder="Add a card…" />' +
+              '<select id="kadd-priority" style="font-family:var(--mono);font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);padding:0 8px;">' +
+                '<option value="P3">P3</option><option value="P2">P2</option><option value="P1">P1</option></select>' +
+              '<button id="kadd-btn">Add</button></div>' : '') +
+            '</div>';
+        }).join("");
+
+        document.getElementById("kanban-board").querySelectorAll("[data-move]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "move", id: b.dataset.id, to: b.dataset.move }) });
+            loadKanban();
+          }));
+        document.getElementById("kanban-board").querySelectorAll("[data-del]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "delete", id: b.dataset.del }) });
+            loadKanban();
+          }));
+        const addBtn = document.getElementById("kadd-btn");
+        if (addBtn) addBtn.addEventListener("click", async () => {
+          const input = document.getElementById("kadd-input");
+          const text = input.value.trim();
+          if (!text) return;
+          const priority = document.getElementById("kadd-priority").value;
+          await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "add", column: "todo", text, priority }) });
+          input.value = "";
+          loadKanban();
+        });
+
+        // drag & drop
+        document.getElementById("kanban-board").querySelectorAll(".kcard").forEach((card) => {
+          card.addEventListener("dragstart", () => card.classList.add("dragging"));
+          card.addEventListener("dragend", () => card.classList.remove("dragging"));
+        });
+        document.getElementById("kanban-board").querySelectorAll(".dropzone").forEach((zone) => {
+          zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("over"); });
+          zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+          zone.addEventListener("drop", async (e) => {
+            e.preventDefault(); zone.classList.remove("over");
+            const dragging = document.querySelector(".kcard.dragging");
+            if (!dragging) return;
+            const id = dragging.dataset.id, to = zone.dataset.col;
+            if (dragging.dataset.col === to) return;
+            await fetch("/api/kanban", { method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "move", id, to }) });
+            loadKanban();
+          });
+        });
+      }
+      document.getElementById("k-search").addEventListener("input", renderKanban);
+      document.getElementById("k-priority-filter").addEventListener("change", renderKanban);
+
+      // ---- Content (per-agent doc library) ----
+      let currentDoc = null; // { agent, file }
+      let contentFilterAgent = "";
+      let contentFiles = [];
+      async function ensureRoster() {
+        if (!roster.length) roster = await fetch("/api/roster").then((r) => r.json());
+        return roster;
+      }
+      async function loadContent() {
+        await ensureRoster();
+        const sel = document.getElementById("doc-new-agent");
+        if (!sel.options.length) sel.innerHTML = roster.map((a) => '<option value="' + a.key + '">' + a.name + '</option>').join("");
+
+        contentFiles = await fetch("/api/content").then((r) => r.json());
+        document.getElementById("content-total").textContent = contentFiles.length;
+        document.getElementById("content-agents").textContent = new Set(contentFiles.map((f) => f.agent)).size;
+        document.getElementById("content-latest").textContent = contentFiles[0] ? contentFiles[0].file : "—";
+
+        const chips = ['<button class="agent-filter-chip' + (contentFilterAgent === "" ? " active" : "") + '" data-af="">All</button>']
+          .concat(roster.map((a) => '<button class="agent-filter-chip' + (contentFilterAgent === a.key ? " active" : "") + '" data-af="' + a.key + '">' + a.name + '</button>'));
+        document.getElementById("content-filter").innerHTML = chips.join("");
+        document.getElementById("content-filter").querySelectorAll("[data-af]").forEach((b) =>
+          b.addEventListener("click", () => { contentFilterAgent = b.dataset.af; loadContent(); }));
+
+        renderDocList();
+      }
+      function renderDocList() {
+        const files = contentFilterAgent ? contentFiles.filter((f) => f.agent === contentFilterAgent) : contentFiles;
+        document.getElementById("doc-list").innerHTML = files.length
+          ? files.map((f) => '<div class="doc-item' + (currentDoc && f.file === currentDoc.file && f.agent === currentDoc.agent ? " active" : "") +
+              '" data-agent="' + f.agent + '" data-file="' + esc(f.file) + '"><span style="text-transform:capitalize;color:var(--faint);">' + f.agent + '</span> · ' + esc(f.file) + "</div>").join("")
+          : '<div class="empty">no docs yet</div>';
+        document.getElementById("doc-list").querySelectorAll("[data-file]").forEach((el) =>
+          el.addEventListener("click", () => openDoc(el.dataset.agent, el.dataset.file)));
+      }
+      async function openDoc(agent, file) {
+        const r = await fetch("/api/content?agent=" + encodeURIComponent(agent) + "&file=" + encodeURIComponent(file)).then((r) => r.json());
+        currentDoc = { agent, file };
+        document.getElementById("doc-current").textContent = agent + " / " + file;
+        const ta = document.getElementById("doc-body");
+        ta.value = r.body || "";
+        ta.disabled = false;
+        document.getElementById("doc-save-btn").disabled = false;
+        document.getElementById("doc-delete-btn").disabled = false;
+        renderDocList();
+      }
+      document.getElementById("doc-new-btn").addEventListener("click", async () => {
+        const nameInput = document.getElementById("doc-new-name");
+        let name = nameInput.value.trim();
+        if (!name) return;
+        if (!/\.(md|txt)$/.test(name)) name += ".md";
+        const agent = document.getElementById("doc-new-agent").value;
+        await fetch("/api/content?agent=" + encodeURIComponent(agent) + "&file=" + encodeURIComponent(name), { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: "" }) });
+        nameInput.value = "";
+        await loadContent();
+        await openDoc(agent, name);
+      });
+      document.getElementById("doc-save-btn").addEventListener("click", async () => {
+        if (!currentDoc) return;
+        await fetch("/api/content?agent=" + encodeURIComponent(currentDoc.agent) + "&file=" + encodeURIComponent(currentDoc.file), { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: document.getElementById("doc-body").value }) });
+      });
+      document.getElementById("doc-delete-btn").addEventListener("click", async () => {
+        if (!currentDoc || !confirm("Delete " + currentDoc.file + "?")) return;
+        await fetch("/api/content?agent=" + encodeURIComponent(currentDoc.agent) + "&file=" + encodeURIComponent(currentDoc.file), { method: "DELETE" });
+        currentDoc = null;
+        document.getElementById("doc-current").textContent = "Select a document";
+        const ta = document.getElementById("doc-body");
+        ta.value = ""; ta.disabled = true;
+        document.getElementById("doc-save-btn").disabled = true;
+        document.getElementById("doc-delete-btn").disabled = true;
+        loadContent();
+      });
+
+      function fleetRow(a) {
+        const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
+        return '<div class="fleet-row">' + dot +
+          '<span class="fleet-name">' + a.agent + '</span>' +
+          '<span class="fleet-role">' + (ROLES[a.agent] || "") + '</span>' +
+          '<span class="fleet-meta"><span>turns <b>' + num(a.turns) + '</b></span><span>cost <b>' + money(a.cost) + '</b></span><span>' + fmt(a.lastActivity) + '</span></span>' +
+          '</div>';
+      }
+
+      // agent-cards gets fully re-rendered every tick (poll interval), which
+      // makes every card a brand-new DOM node each time. If we always attach
+      // the "rise" entrance-animation class, the browser replays it from
+      // opacity:0 on every single tick — a visible flash every few seconds.
+      // Play it once, on the very first render, and never again.
+      let agentCardsFirstRender = true;
+      function agentCard(a, i) {
+        const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
+        const riseClass = agentCardsFirstRender ? " rise" : "";
+        return '<div class="panel agent-card b-4' + riseClass + '" style="animation-delay:' + (i * 40) + 'ms; cursor:pointer;" data-open-agent="' + a.agent + '">' +
+          '<div class="name-row">' + dot + a.agent + '</div>' +
+          '<div class="role">' + (ROLES[a.agent] || "") + '</div>' +
+          '<div class="meta-grid">' +
+            '<div class="meta-tile"><div class="l">Turns</div><div class="v">' + num(a.turns) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Cost</div><div class="v">' + money(a.cost) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Tok in</div><div class="v">' + num(a.tokIn) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Tok out</div><div class="v">' + num(a.tokOut) + '</div></div>' +
+          '</div>' +
+          '<div class="stat-sub">last active ' + fmt(a.lastActivity) + ' · click for detail</div>' +
+        '</div>';
+      }
+
+      async function tick() {
+        try {
+          const [stats, agents, events, tasks] = await Promise.all([
+            fetch("/api/stats").then((r) => r.json()),
+            fetch("/api/agents").then((r) => r.json()),
+            fetch("/api/events?limit=40").then((r) => r.json()),
+            fetch("/api/tasks").then((r) => r.json()),
+          ]);
+
+          document.getElementById("kpi-active").textContent = stats.agentsActive + " / " + stats.agentsTotal;
+          document.getElementById("hero-active-pill").textContent = stats.agentsActive + " / " + stats.agentsTotal + " active";
+          document.getElementById("kpi-turns").textContent = num(stats.turnsToday);
+          document.getElementById("kpi-turns-total").textContent = num(stats.turnsTotal) + " all-time";
+          document.getElementById("kpi-cost").textContent = money(stats.costToday);
+          document.getElementById("kpi-cost-total").textContent = money(stats.costTotal) + " all-time";
+          document.getElementById("kpi-errors").textContent = num(stats.errorsToday);
+
+          const feedHtml = events.length
+            ? events.map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="a">' + e.agent +
+                '</span><span class="k">' + e.kind + '</span><span class="s">' + esc(e.summary) + "</span></div>").join("")
+            : '<div class="empty">no events yet</div>';
+          document.getElementById("feed-mini").innerHTML = events.length
+            ? events.slice(0, 8).map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="s">' + esc(e.summary) + "</span></div>").join("")
+            : '<div class="empty">waiting for activity…</div>';
+
+          document.getElementById("fleet-list").innerHTML = agents.map(fleetRow).join("");
+          document.getElementById("agent-cards").innerHTML = agents.map(agentCard).join("");
+          agentCardsFirstRender = false;
+          document.getElementById("agent-cards").querySelectorAll("[data-open-agent]").forEach((el) =>
+            el.addEventListener("click", () => openDrawer(el.dataset.openAgent)));
+
+          // focus ring: agent with the largest share of today's turns
+          const top = agents.reduce((best, a) => (a.turns > (best?.turns || 0) ? a : best), null);
+          const totalTurns = agents.reduce((s, a) => s + (Number(a.turns) || 0), 0);
+          const pct = top && totalTurns ? Math.round((top.turns / totalTurns) * 100) : 0;
+          document.getElementById("focus-pct").textContent = pct + "%";
+          document.getElementById("focus-agent").textContent = (top ? top.agent : "—") + " of turns";
+          const circumference = 2 * Math.PI * 42;
+          document.getElementById("focus-arc").setAttribute("stroke-dasharray", (circumference * pct / 100).toFixed(1) + " " + circumference.toFixed(1));
+
+          document.getElementById("tasks-open").innerHTML = tasks.open && tasks.open.length
+            ? tasks.open.map((t) => '<div class="rrow"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) + "</span></div>").join("")
+            : '<div class="empty">nothing running</div>';
+          document.getElementById("tasks-done").innerHTML = tasks.done && tasks.done.length
+            ? tasks.done.map((t) => '<div class="rrow"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) +
+                '</span><span class="t" style="margin-left:auto">' + fmt(t.ts) + "</span></div>").join("")
+            : '<div class="empty">nothing yet</div>';
+
+          document.getElementById("mon-model").textContent = stats.model || "—";
+          document.getElementById("mon-in").textContent = num(stats.tokInToday);
+          document.getElementById("mon-out").textContent = num(stats.tokOutToday);
+          document.getElementById("mon-total").textContent = money(stats.costTotal);
+          const maxCost = Math.max(0.000001, ...agents.map((a) => Number(a.cost) || 0));
+          document.getElementById("mon-table").innerHTML = agents.map((a) =>
+            '<tr><td class="agent">' + a.agent + '</td><td class="num">' + num(a.turns) + '</td><td class="num">' +
+            num(a.tokIn) + '</td><td class="num">' + num(a.tokOut) + '</td><td class="num">' + money(a.cost) +
+            '<div class="bar"><span style="width:' + Math.round((Number(a.cost) || 0) / maxCost * 100) + '%"></span></div></td></tr>').join("");
+
+          document.getElementById("status").textContent = "live · updated " + new Date().toLocaleTimeString();
+        } catch (err) {
+          document.getElementById("status").textContent = "reconnecting…";
+        }
+      }
+      tick();
+      setInterval(tick, 4000);
+      if (window.lucide) lucide.createIcons(); // renders every static <i data-lucide> on the page once
+    </script>
+
+    <!-- Office — a 3D shop floor, one building per agent. This is the only
+         external dependency in the whole dashboard (Three.js, via CDN + an
+         import map). Lazy: nothing here loads or runs until the Office tab
+         is opened for the first time. -->
+    <script type="module">
+      const AGENT_COLORS = {
+        foreman: 0xeac266, radar: 0x4bc6fa, quill: 0xad8cff, wrench: 0xff7c68, ledger: 0x00c89c,
+      };
+      const LAYOUT_ORDER = ["radar", "quill", "wrench", "ledger"]; // ring around the Foreman's tower
+      const CAMERA_TARGET = { x: 9, y: 8, z: 11 };
+      const CAMERA_START = { x: 20, y: 17, z: 24 };
+
+      let officeStarted = false;
+      let scene, camera, renderer, controls, raycaster, mouse, clock, composer, bloomPass;
+      const buildings = {}; // agent key -> { group, glowMats, glow, baseY, phase, targetEmissive, targetGlow, lastTurns }
+
+      async function initOffice() {
+        if (officeStarted) return;
+        officeStarted = true;
+        try {
+          const THREE = await import("three");
+          const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
+          const { EffectComposer } = await import("three/addons/postprocessing/EffectComposer.js");
+          const { RenderPass } = await import("three/addons/postprocessing/RenderPass.js");
+          const { UnrealBloomPass } = await import("three/addons/postprocessing/UnrealBloomPass.js");
+          buildScene(THREE, OrbitControls, { EffectComposer, RenderPass, UnrealBloomPass });
+        } catch (err) {
+          const wrap = document.getElementById("office-canvas-wrap");
+          wrap.innerHTML = '<div class="office-loading"><div class="t1">Could not load the 3D view</div>' +
+            '<div class="t2">' + (err && err.message ? err.message : "WebGL may be unavailable in this browser.") + '</div></div>';
+        }
+      }
+      window.initOffice = initOffice;
+
+      function buildScene(THREE, OrbitControls, PP) {
+        const wrap = document.getElementById("office-canvas-wrap");
+        const width = wrap.clientWidth, height = wrap.clientHeight;
+        clock = new THREE.Clock();
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x04060c);
+        scene.fog = new THREE.Fog(0x04060c, 14, 36);
+
+        camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+        camera.position.set(CAMERA_START.x, CAMERA_START.y, CAMERA_START.z);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(width, height);
+        renderer.shadowMap.enabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
+        wrap.insertBefore(renderer.domElement, wrap.firstChild);
+
+        // Real bloom, not just a brighter material — bright emissive surfaces
+        // (active buildings, windows, the HQ beacon) genuinely bleed light into
+        // the scene around them. This is the actual technique for "glowing"
+        // 3D lights, not a KM-specific trick — it's Three.js's own official
+        // postprocessing pass.
+        composer = new PP.EffectComposer(renderer);
+        composer.addPass(new PP.RenderPass(scene, camera));
+        bloomPass = new PP.UnrealBloomPass(new THREE.Vector2(width, height), 0.6, 0.4, 0.32);
+        composer.addPass(bloomPass);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 5;
+        controls.maxDistance = 26;
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.target.set(0, 1.4, 0);
+        controls.enabled = false; // re-enabled once the intro fly-in finishes
+
+        scene.add(new THREE.AmbientLight(0x445566, 1.1));
+        const moon = new THREE.DirectionalLight(0x8fa8ff, 0.55);
+        moon.position.set(-8, 12, -6);
+        moon.castShadow = true;
+        scene.add(moon);
+
+        // ground
+        const groundGeo = new THREE.CircleGeometry(16, 48);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a0e18, roughness: 0.95 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        const grid = new THREE.GridHelper(32, 32, 0x2a3244, 0x181e2c);
+        grid.position.y = 0.01;
+        scene.add(grid);
+
+        // Foreman's HQ tower, centre; four specialists ringed around it.
+        addBuilding(THREE, "foreman", 0, 0, 1.6, 5.2, "hq");
+        const radius = 5.2;
+        const KIND = { radar: "radar", quill: "spire", wrench: "gantry", ledger: "facade" };
+        LAYOUT_ORDER.forEach((key, i) => {
+          const angle = (i / LAYOUT_ORDER.length) * Math.PI * 2;
+          addBuilding(THREE, key, Math.cos(angle) * radius, Math.sin(angle) * radius, 1.1, 3.2, KIND[key]);
+          addPath(THREE, Math.cos(angle) * radius, Math.sin(angle) * radius, key);
+        });
+
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+        renderer.domElement.addEventListener("click", (e) => onClick(THREE, e));
+
+        window.addEventListener("resize", onResize);
+
+        document.getElementById("office-loading").style.display = "none";
+        renderLegend();
+        flyIn(THREE);
+        animate(THREE);
+        pollOfficeData();
+        setInterval(pollOfficeData, 4000);
+      }
+
+      // Cinematic intro: ease the camera in from a pulled-back establishing
+      // shot to the working default, then hand control to OrbitControls.
+      function flyIn(THREE) {
+        const duration = 1600;
+        const start = performance.now();
+        function step(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+          camera.position.set(
+            CAMERA_START.x + (CAMERA_TARGET.x - CAMERA_START.x) * eased,
+            CAMERA_START.y + (CAMERA_TARGET.y - CAMERA_START.y) * eased,
+            CAMERA_START.z + (CAMERA_TARGET.z - CAMERA_START.z) * eased,
+          );
+          camera.lookAt(0, 1.4, 0);
+          if (t < 1) requestAnimationFrame(step);
+          else controls.enabled = true;
+        }
+        requestAnimationFrame(step);
+      }
+
+      // Ground path from a specialist's plot back to HQ — glows when either
+      // end has recent activity. An honest stand-in for "handoffs": we don't
+      // track explicit agent-to-agent handoffs, just recent activity at
+      // either end of the path.
+      function addPath(THREE, x, z, key) {
+        const points = [new THREE.Vector3(x * 0.28, 0.03, z * 0.28), new THREE.Vector3(x * 0.92, 0.03, z * 0.92)];
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({ color: AGENT_COLORS[key], transparent: true, opacity: 0.18 });
+        const line = new THREE.Line(geo, mat);
+        scene.add(line);
+        if (buildings[key]) buildings[key].pathMat = mat;
+      }
+
+      // Role-flavoured silhouettes, built entirely from primitives — no
+      // external models or textures, just boxes/cylinders/cones composed
+      // per role so each building reads differently at a glance.
+      function addBuilding(THREE, key, x, z, footprint, height, kind) {
+        const color = AGENT_COLORS[key] || 0x888888;
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+        const glowMats = [];
+
+        const bodyMat = new THREE.MeshStandardMaterial({
+          color: 0x11151f, emissive: new THREE.Color(color), emissiveIntensity: 0.12, roughness: 0.6, metalness: 0.15,
+        });
+        glowMats.push(bodyMat);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(footprint, height, footprint), bodyMat);
+        body.position.y = height / 2;
+        body.castShadow = true;
+        body.userData.agentKey = key;
+        group.add(body);
+
+        // window facade — a small emissive grid on the two front faces, lit
+        // by the same intensity as the body ("lit windows mean live work").
+        const winMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0.15 });
+        glowMats.push(winMat);
+        const rows = Math.max(2, Math.round(height / 0.7)), cols = kind === "facade" ? 4 : 2;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.2), winMat);
+            const cx = (c - (cols - 1) / 2) * (footprint / (cols + 0.6));
+            win.position.set(cx, 0.5 + r * 0.65, footprint / 2 + 0.01);
+            group.add(win);
+            const win2 = win.clone();
+            win2.position.z = -footprint / 2 - 0.01;
+            win2.rotation.y = Math.PI;
+            group.add(win2);
+          }
+        }
+
+        // roof, per role
+        let roof = null, beacon = null, dish = null;
+        if (kind === "hq") {
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 0.6, 0.9, footprint * 0.6), bodyMat);
+          roof.position.y = height + 0.45;
+          group.add(roof);
+          beacon = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0.6 }));
+          beacon.position.y = height + 1.05;
+          glowMats.push(beacon.material);
+          group.add(beacon);
+        } else if (kind === "radar") {
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8), bodyMat);
+          mast.position.y = height + 0.45;
+          group.add(mast);
+          dish = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20), new THREE.MeshStandardMaterial({ color: 0x223047, emissive: new THREE.Color(color), emissiveIntensity: 0.3, side: THREE.DoubleSide }));
+          dish.position.y = height + 0.95;
+          dish.rotation.x = -Math.PI / 3.2;
+          glowMats.push(dish.material);
+          group.add(dish);
+        } else if (kind === "spire") {
+          roof = new THREE.Mesh(new THREE.ConeGeometry(footprint * 0.62, 1.1, 4), bodyMat);
+          roof.position.y = height + 0.55;
+          roof.rotation.y = Math.PI / 4;
+          group.add(roof);
+        } else if (kind === "gantry") {
+          [-1, 1].forEach((side) => {
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(0.22, height * 0.55, 0.22), bodyMat);
+            beam.position.set(side * (footprint / 2 + 0.12), height * 0.3, 0);
+            group.add(beam);
+          });
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 1.1, 0.3, footprint * 1.1), bodyMat);
+          roof.position.y = height + 0.15;
+          group.add(roof);
+        } else if (kind === "facade") {
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 0.9, 0.25, footprint * 0.9), bodyMat);
+          roof.position.y = height + 0.12;
+          group.add(roof);
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), bodyMat);
+          antenna.position.y = height + 0.55;
+          group.add(antenna);
+        }
+
+        scene.add(group);
+
+        const glow = new THREE.PointLight(color, 0, 6);
+        glow.position.set(0, height + 0.6, 0);
+        group.add(glow);
+
+        buildings[key] = {
+          group, glowMats, glow, dish, baseY: 0, phase: Math.random() * Math.PI * 2,
+          targetEmissive: 0.12, targetGlow: 0, lastTurns: null, flashUntil: 0,
+        };
+      }
+
+      function onResize() {
+        const wrap = document.getElementById("office-canvas-wrap");
+        if (!wrap || !renderer) return;
+        const width = wrap.clientWidth, height = wrap.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+        if (composer) composer.setSize(width, height);
+        if (bloomPass) bloomPass.resolution.set(width, height);
+      }
+
+      function onClick(THREE, e) {
+        const wrap = document.getElementById("office-canvas-wrap");
+        const rect = wrap.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const meshes = [];
+        for (const key in buildings) buildings[key].group.traverse((o) => { if (o.userData.agentKey) meshes.push(o); });
+        const hit = raycaster.intersectObjects(meshes)[0];
+        if (hit && hit.object.userData.agentKey && window.openDrawer) {
+          window.openDrawer(hit.object.userData.agentKey);
+        }
+      }
+
+      function animate(THREE) {
+        requestAnimationFrame(() => animate(THREE));
+        controls.update();
+        const t = clock.getElapsedTime();
+        for (const key in buildings) {
+          const b = buildings[key];
+          const flashing = performance.now() < b.flashUntil;
+          const target = flashing ? 1.9 : b.targetEmissive;
+          const current = b.glowMats[0].emissiveIntensity + (target - b.glowMats[0].emissiveIntensity) * 0.1;
+          b.glowMats.forEach((m) => { m.emissiveIntensity = current; });
+          b.glow.intensity += ((flashing ? 2 : b.targetGlow) - b.glow.intensity) * 0.1;
+          if (b.pathMat) b.pathMat.opacity += ((b.targetEmissive > 1 ? 0.7 : 0.18) - b.pathMat.opacity) * 0.08;
+          // gentle idle bob + sway, per-building phase so they don't move in lockstep
+          b.group.position.y = b.baseY + Math.sin(t * 0.6 + b.phase) * 0.035;
+          b.group.rotation.y = Math.sin(t * 0.3 + b.phase) * 0.015;
+          if (b.dish) b.dish.rotation.z = t * 0.25 + b.phase;
+        }
+        composer.render();
+      }
+
+      async function pollOfficeData() {
+        try {
+          const [agents, stats] = await Promise.all([
+            fetch("/api/agents").then((r) => r.json()),
+            fetch("/api/stats").then((r) => r.json()),
+          ]);
+          let lit = 0;
+          agents.forEach((a) => {
+            const b = buildings[a.agent];
+            if (!b) return;
+            const active = a.status === "active";
+            if (active) lit++;
+            b.targetEmissive = active ? 1.1 : 0.12;
+            b.targetGlow = active ? 1.1 : 0;
+            // a fresh turn since the last poll gets a brief bright flash on top of the steady glow
+            if (b.lastTurns !== null && a.turns > b.lastTurns) b.flashUntil = performance.now() + 900;
+            b.lastTurns = a.turns;
+          });
+          document.getElementById("office-lights").textContent = lit;
+          document.getElementById("office-turns").textContent = stats.turnsToday ?? 0;
+          document.getElementById("office-buildings").textContent = Object.keys(buildings).length;
+        } catch { /* keep last-known glow state */ }
+      }
+
+      function renderLegend() {
+        const roster = Object.keys(AGENT_COLORS);
+        document.getElementById("office-legend").innerHTML = roster.map((key) => {
+          const hex = "#" + AGENT_COLORS[key].toString(16).padStart(6, "0");
+          return '<div class="office-legend-item"><span class="office-legend-dot" style="background:' + hex + ';"></span>' + key + '</div>';
+        }).join("");
+      }
+    </script>
+  </body>
+</html>
