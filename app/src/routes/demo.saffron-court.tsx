@@ -221,10 +221,10 @@ function SaffronCourtDemo() {
                       <label><input type="radio" name="ff" checked={fulfillment === "pickup"} onChange={() => setFulfillment("pickup")} /> Pickup</label>
                       <label><input type="radio" name="ff" checked={fulfillment === "delivery"} onChange={() => setFulfillment("delivery")} /> Delivery</label>
                     </div>
-                    <div className="sc-field"><label>Name</label><input name="name" required /></div>
-                    <div className="sc-field"><label>Phone</label><input name="phone" required /></div>
+                    <div className="sc-field"><label htmlFor="co-name">Name</label><input id="co-name" name="name" required /></div>
+                    <div className="sc-field"><label htmlFor="co-phone">Phone</label><input id="co-phone" name="phone" required /></div>
                     {fulfillment === "delivery" && (
-                      <div className="sc-field"><label>Delivery address</label><input name="address" required /></div>
+                      <div className="sc-field"><label htmlFor="co-address">Delivery address</label><input id="co-address" name="address" required /></div>
                     )}
                     {orderState === "error" && <div className="sc-error" style={{ marginBottom: 10 }}>{orderError}</div>}
                     <button className="sc-submit" disabled={orderState === "busy"}>
@@ -247,22 +247,22 @@ function SaffronCourtDemo() {
           ) : (
             <form onSubmit={onBook}>
               <div className="sc-row2">
-                <div className="sc-field"><label>Name</label><input name="bname" required /></div>
-                <div className="sc-field"><label>Phone</label><input name="bphone" required /></div>
+                <div className="sc-field"><label htmlFor="bk-name">Name</label><input id="bk-name" name="bname" required /></div>
+                <div className="sc-field"><label htmlFor="bk-phone">Phone</label><input id="bk-phone" name="bphone" required /></div>
               </div>
               <div className="sc-row2">
-                <div className="sc-field"><label>Date</label><input name="date" type="date" required /></div>
-                <div className="sc-field"><label>Time</label><input name="time" type="time" required /></div>
+                <div className="sc-field"><label htmlFor="bk-date">Date</label><input id="bk-date" name="date" type="date" required /></div>
+                <div className="sc-field"><label htmlFor="bk-time">Time</label><input id="bk-time" name="time" type="time" required /></div>
               </div>
               <div className="sc-field">
-                <label>Party size</label>
-                <select name="partySize" defaultValue="2">
+                <label htmlFor="bk-party">Party size</label>
+                <select id="bk-party" name="partySize" defaultValue="2">
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>{n} {n === 1 ? "guest" : "guests"}</option>
                   ))}
                 </select>
               </div>
-              <div className="sc-field"><label>Notes (optional)</label><textarea name="notes" rows={2} /></div>
+              <div className="sc-field"><label htmlFor="bk-notes">Notes (optional)</label><textarea id="bk-notes" name="notes" rows={2} /></div>
               {bookingState === "error" && <div className="sc-error" style={{ marginBottom: 10 }}>{bookingError}</div>}
               <button className="sc-submit" disabled={bookingState === "busy"}>
                 {bookingState === "busy" ? "Requesting…" : "Request table"}
