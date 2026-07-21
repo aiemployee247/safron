@@ -4,202 +4,407 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mission Control — Agent Garage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
     <style>
       :root {
-        --bg: #080c17; --panel: #121724; --panel-hi: #1a2030;
+        --bg: #080c17; --panel: #121724; --panel-hi: #1a2030; --panel-glass: rgba(18, 23, 36, 0.7);
         --line: #272c3c; --line-hi: #3b4255; --ink: #f3f5fb; --dim: #b4b7c1; --faint: #70747f;
-        --gold: #eac266; --signal: #00c89c; --iris: #ad8cff; --sky: #4bc6fa; --coral: #ff7c68;
+        --gold: #eac266; --gold-dim: rgba(234, 194, 102, 0.14); --signal: #00c89c; --signal-dim: rgba(0, 200, 156, 0.14);
+        --iris: #ad8cff; --sky: #4bc6fa; --coral: #ff7c68; --coral-dim: rgba(255, 124, 104, 0.14);
         --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
         --sans: "Work Sans", system-ui, sans-serif;
+        --r-lg: 26px; --r-md: 16px; --r-sm: 10px;
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: var(--bg); color: var(--ink); font-family: var(--sans); padding: 20px 24px 48px; }
+      body {
+        background: var(--bg); color: var(--ink); font-family: var(--sans);
+        padding: 22px 22px 56px; max-width: 1440px; margin: 0 auto;
+        background-image:
+          radial-gradient(600px 400px at 90% -5%, rgba(234, 194, 102, 0.08), transparent 60%),
+          radial-gradient(500px 380px at 5% 10%, rgba(0, 200, 156, 0.07), transparent 60%);
+        background-attachment: fixed;
+      }
       a { color: inherit; }
-      .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .28em;
-        text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 12px; }
-      .eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--gold); }
-      h1 { font-size: 28px; letter-spacing: -.02em; margin: 12px 0 2px; }
-      .sub { color: var(--dim); font-size: 14px; }
-      /* tabs */
-      .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 22px 0 20px; border-bottom: 1px solid var(--line); }
-      .tab { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
-        color: var(--faint); background: none; border: 0; padding: 10px 14px; cursor: pointer; position: relative; }
-      .tab:hover { color: var(--ink); }
-      .tab.active { color: var(--gold); }
-      .tab.active::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--gold); }
+      button { font-family: inherit; }
+
+      /* ---- animations ---- */
+      @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes float-orb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(24px, -18px) scale(1.05); }
+        66% { transform: translate(-18px, 12px) scale(0.97); }
+      }
+      @keyframes pulse-ring { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(2.1); opacity: 0; } }
+      @keyframes breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+      .rise { animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+      /* ---- topbar ---- */
+      .topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 4px; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand-mark {
+        width: 34px; height: 34px; border-radius: 10px; background: var(--panel-hi); border: 1px solid var(--line-hi);
+        display: grid; place-items: center; position: relative; flex: none;
+      }
+      .brand-mark svg { width: 17px; height: 17px; color: var(--gold); }
+      .brand-mark .pulse-dot {
+        position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--signal);
+        box-shadow: 0 0 8px var(--signal); animation: breathe 3s ease-in-out infinite;
+      }
+      .brand-word { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+      .brand-word .dim { color: var(--faint); font-weight: 600; }
+      .ver-badge {
+        font-family: var(--mono); font-size: 9px; color: var(--faint); border: 1px solid var(--line); background: var(--panel);
+        padding: 3px 7px; border-radius: 6px; margin-left: 2px;
+      }
+      .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
+      .tab {
+        font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint);
+        background: none; border: 1px solid transparent; border-radius: 999px; padding: 8px 13px; cursor: pointer; transition: all 0.15s;
+      }
+      .tab:hover { color: var(--ink); background: var(--panel-hi); }
+      .tab.active { color: var(--bg); background: var(--gold); font-weight: 700; }
+      .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+      .clock-chip {
+        font-family: var(--mono); font-size: 11px; color: var(--dim); border: 1px solid var(--line); background: var(--panel);
+        padding: 7px 11px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+      }
+      .clock-chip .lbl { color: var(--faint); font-size: 9px; letter-spacing: 0.15em; }
+      .sub-line { color: var(--dim); font-size: 13px; margin: 10px 2px 20px; }
+
       .view { display: none; }
       .view.active { display: block; }
-      /* cards + grid */
-      .kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-      .kpi { background: linear-gradient(180deg, var(--panel-hi), var(--panel)); border: 1px solid var(--line);
-        border-radius: 14px; padding: 16px 18px; }
-      .kpi .label { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
-      .kpi .value { font-size: 30px; font-weight: 700; margin-top: 8px; letter-spacing: -.01em; }
-      .kpi .value.gold { color: var(--gold); } .kpi .value.signal { color: var(--signal); } .kpi .value.coral { color: var(--coral); }
-      .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
-      .card { background: linear-gradient(180deg, var(--panel-hi), var(--panel)); border: 1px solid var(--line);
-        border-radius: 14px; padding: 16px; }
-      .card .name { font-weight: 700; display: flex; align-items: center; gap: 8px; text-transform: capitalize; }
+
+      /* ---- bento grid ---- */
+      .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      .b-1 { grid-column: span 12; } .b-3 { grid-column: span 12; } .b-4 { grid-column: span 12; }
+      .b-5 { grid-column: span 12; } .b-6 { grid-column: span 12; } .b-7 { grid-column: span 12; } .b-8 { grid-column: span 12; }
+      @media (min-width: 720px) {
+        .b-3 { grid-column: span 6; } .b-4 { grid-column: span 6; } .b-6 { grid-column: span 6; }
+      }
+      @media (min-width: 1024px) {
+        .b-3 { grid-column: span 3; } .b-4 { grid-column: span 4; } .b-5 { grid-column: span 5; }
+        .b-6 { grid-column: span 6; } .b-7 { grid-column: span 7; } .b-8 { grid-column: span 8; }
+      }
+
+      /* ---- card shells ---- */
+      .panel {
+        background: linear-gradient(180deg, var(--panel-hi), var(--panel)); border: 1px solid var(--line);
+        border-radius: var(--r-lg); padding: 22px; position: relative; overflow: hidden;
+      }
+      .panel.flush { padding: 0; }
+      .panel-eyebrow {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint);
+        display: flex; align-items: center; gap: 8px;
+      }
+      .panel-eyebrow .dash { width: 18px; height: 1px; background: var(--line-hi); }
+      .panel-title { font-size: 14px; color: var(--ink); margin-top: 6px; font-weight: 600; }
+
+      /* hero */
+      .hero {
+        background: radial-gradient(120% 140% at 100% 0%, #1a2033 0%, #0c1120 60%); border: 1px solid var(--line-hi);
+        min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
+      }
+      .hero .orb {
+        position: absolute; width: 280px; height: 280px; border-radius: 50%; filter: blur(70px); pointer-events: none;
+        background: var(--gold); opacity: 0.18; top: -90px; right: -90px; animation: float-orb 12s ease-in-out infinite;
+      }
+      .hero .orb2 {
+        position: absolute; width: 220px; height: 220px; border-radius: 50%; filter: blur(60px); pointer-events: none;
+        background: var(--signal); opacity: 0.12; bottom: -80px; left: 10%; animation: float-orb 15s ease-in-out infinite reverse;
+      }
+      .hero-status { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); position: relative; z-index: 1; }
+      .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); position: relative; }
+      .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--signal); animation: pulse-ring 2.2s ease-out infinite; }
+      .hero h1 {
+        font-size: clamp(28px, 4vw, 42px); line-height: 1; letter-spacing: -0.02em; margin-top: 12px; position: relative; z-index: 1; font-weight: 800;
+      }
+      .hero h1 em { font-style: normal; color: var(--gold); }
+      .hero p { color: var(--dim); font-size: 13px; max-width: 420px; margin-top: 10px; position: relative; z-index: 1; }
+      .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; position: relative; z-index: 1; }
+      .pill {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px;
+        border-radius: 999px; border: 1px solid var(--line-hi); color: var(--dim); background: rgba(255,255,255,0.03);
+      }
+      .pill.on { background: var(--signal-dim); border-color: rgba(0,200,156,0.35); color: var(--signal); }
+
+      /* accent card (feed) */
+      .accent { background: linear-gradient(155deg, #1c2a2a, #0f1a18); border: 1px solid rgba(0,200,156,0.25); }
+      .accent .panel-eyebrow { color: var(--signal); } .accent .panel-eyebrow .dash { background: var(--signal); }
+
+      /* stat tiles */
+      .stat { display: flex; flex-direction: column; gap: 6px; min-height: 128px; }
+      .stat-value { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: auto; }
+      .stat-value.gold { color: var(--gold); } .stat-value.signal { color: var(--signal); } .stat-value.coral { color: var(--coral); }
+      .stat-sub { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.05em; }
+
+      /* focus ring */
+      .ring-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+      .ring-svg { width: 132px; height: 132px; }
+      .ring-pct { font-size: 34px; font-weight: 800; }
+      .ring-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+
+      /* rows / lists */
+      .rowlist { display: flex; flex-direction: column; }
+      .rrow { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+      .rrow:last-child { border-bottom: 0; }
+      .rrow .t { font-family: var(--mono); font-size: 10px; color: var(--faint); min-width: 58px; }
+      .rrow .a { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); min-width: 60px; }
+      .rrow .k { font-family: var(--mono); font-size: 10px; color: var(--dim); min-width: 54px; }
+      .rrow .s { color: var(--ink); flex: 1; }
+      .empty { color: var(--faint); font-size: 13px; font-family: var(--mono); padding: 6px 0; }
+
       .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
       .dot.active { background: var(--signal); box-shadow: 0 0 10px var(--signal); }
-      .role { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
-      .card .meta { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 12px; display: flex; justify-content: space-between; }
-      .card .meta b { color: var(--ink); font-weight: 600; }
-      .cols { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 16px; }
-      @media (min-width: 820px) { .cols.two { grid-template-columns: 1fr 1fr; } .cols.wide { grid-template-columns: 3fr 2fr; } }
-      .section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
-      .section h2 { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 12px; }
-      .section h2 .slash { color: var(--gold); }
-      .row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-      .row:last-child { border-bottom: 0; }
-      .row .t { font-family: var(--mono); font-size: 10px; color: var(--faint); min-width: 62px; }
-      .row .a { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--gold); min-width: 60px; }
-      .row .k { font-family: var(--mono); font-size: 10px; color: var(--dim); min-width: 56px; }
-      .row .s { color: var(--ink); }
-      .empty { color: var(--faint); font-size: 13px; font-family: var(--mono); }
+
+      /* fleet list card */
+      .fleet-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .fleet-row:last-child { border-bottom: 0; }
+      .fleet-name { font-weight: 700; text-transform: capitalize; min-width: 78px; }
+      .fleet-role { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+      .fleet-meta { margin-left: auto; display: flex; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+      .fleet-meta b { color: var(--ink); font-weight: 600; }
+
+      /* agent bento cards */
+      .agent-card { display: flex; flex-direction: column; gap: 10px; min-height: 170px; }
+      .agent-card .name-row { display: flex; align-items: center; gap: 8px; font-weight: 700; text-transform: capitalize; font-size: 15px; }
+      .agent-card .role { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+      .agent-card .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+      .agent-card .meta-tile { background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 10px; }
+      .agent-card .meta-tile .l { font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+      .agent-card .meta-tile .v { font-family: var(--mono); font-size: 13px; color: var(--ink); margin-top: 2px; font-weight: 600; }
+
       table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-        color: var(--faint); padding: 6px 8px; border-bottom: 1px solid var(--line); }
-      td { padding: 8px; border-bottom: 1px solid var(--line); }
+      th {
+        text-align: left; font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--faint); padding: 8px; border-bottom: 1px solid var(--line);
+      }
+      td { padding: 10px 8px; border-bottom: 1px solid var(--line); }
       td.num { font-family: var(--mono); text-align: right; }
-      td.agent { text-transform: capitalize; }
-      .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
-      .bar > span { display: block; height: 100%; background: linear-gradient(90deg, #eacf83, #d09945); }
-      .status { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); margin-top: 20px; }
+      td.agent { text-transform: capitalize; font-weight: 600; }
+      .bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
+      .bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), #d09945); }
+
+      .status-line {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint);
+        margin-top: 24px; display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 14px;
+      }
+      .status-line .on { color: var(--signal); }
+
       /* kanban */
-      .kanban { display: grid; gap: 12px; grid-template-columns: 1fr; }
+      .kanban { display: grid; gap: 14px; grid-template-columns: 1fr; }
       @media (min-width: 820px) { .kanban { grid-template-columns: repeat(3, 1fr); } }
-      .kcol h3 { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
-      .kcard { background: var(--panel-hi); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; }
+      .kcol h3 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+      .kcard {
+        background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 11px 13px;
+        margin-bottom: 8px; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; transition: border-color 0.15s;
+      }
+      .kcard:hover { border-color: var(--line-hi); }
       .kcard .txt { flex: 1; word-break: break-word; }
       .kcard button { font-family: var(--mono); font-size: 11px; color: var(--faint); background: none; border: 0; cursor: pointer; padding: 2px 4px; }
-      .kcard button:hover { color: var(--ink); }
-      .kadd { display: flex; gap: 6px; margin-top: 8px; }
-      .kadd input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 12px; padding: 7px 9px; }
-      .kadd button { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--signal); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+      .kcard button:hover { color: var(--gold); }
+      .kadd { display: flex; gap: 6px; margin-top: 10px; }
+      .kadd input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); font-size: 12px; padding: 9px 11px; }
+      .kadd input:focus { outline: none; border-color: var(--gold); }
+      .kadd button {
+        font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--signal); background: var(--signal-dim);
+        border: 1px solid rgba(0,200,156,0.3); border-radius: var(--r-sm); padding: 9px 14px; cursor: pointer;
+      }
+
       /* docs */
-      .docs { display: grid; gap: 16px; grid-template-columns: 1fr; }
-      @media (min-width: 820px) { .docs { grid-template-columns: 220px 1fr; } }
-      .doc-item { font-family: var(--mono); font-size: 12px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--dim); }
-      .doc-item:hover { background: var(--panel-hi); }
-      .doc-item.active { background: var(--panel-hi); color: var(--gold); }
-      .doc-editor textarea { width: 100%; min-height: 320px; background: var(--panel-hi); border: 1px solid var(--line);
-        border-radius: 10px; color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 12px; resize: vertical; }
+      .docs { display: grid; gap: 14px; grid-template-columns: 1fr; }
+      @media (min-width: 820px) { .docs { grid-template-columns: 240px 1fr; } }
+      .doc-item { font-family: var(--mono); font-size: 12px; padding: 9px 11px; border-radius: var(--r-sm); cursor: pointer; color: var(--dim); }
+      .doc-item:hover { background: rgba(255,255,255,0.04); }
+      .doc-item.active { background: var(--gold-dim); color: var(--gold); }
+      .doc-editor textarea {
+        width: 100%; min-height: 340px; background: rgba(0,0,0,0.2); border: 1px solid var(--line);
+        border-radius: var(--r-sm); color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 14px; resize: vertical;
+      }
+      .doc-editor textarea:focus { outline: none; border-color: var(--gold); }
       .doc-toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
-      .doc-toolbar input { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 12px; padding: 7px 9px; width: 220px; }
-      .btn { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink);
-        background: var(--panel-hi); border: 1px solid var(--line-hi); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+      .doc-toolbar input { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); font-size: 12px; padding: 9px 11px; width: 100%; }
+      .btn {
+        font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink);
+        background: rgba(255,255,255,0.04); border: 1px solid var(--line-hi); border-radius: var(--r-sm); padding: 9px 14px; cursor: pointer; transition: all 0.15s;
+      }
       .btn:hover { border-color: var(--gold); color: var(--gold); }
       .btn.danger:hover { border-color: var(--coral); color: var(--coral); }
+      .btn:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--faint); }
     </style>
   </head>
   <body>
-    <div class="eyebrow">Mission Control</div>
-    <h1>Pit Crew</h1>
-    <div class="sub">Live read-only view of the crew. Updates every few seconds.</div>
-
-    <div class="tabs" id="tabs">
-      <button class="tab active" data-view="command">Command Center</button>
-      <button class="tab" data-view="agents">Agents</button>
-      <button class="tab" data-view="tasks">Tasks</button>
-      <button class="tab" data-view="monitor">System Monitor</button>
-      <button class="tab" data-view="host">Host</button>
-      <button class="tab" data-view="kanban">Kanban</button>
-      <button class="tab" data-view="docs">Docs</button>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span class="pulse-dot"></span>
+        </div>
+        <span class="brand-word">Pit Crew <span class="dim">Mission Control</span></span>
+        <span class="ver-badge">Agent Garage</span>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-view="command">Command Center</button>
+        <button class="tab" data-view="agents">Agents</button>
+        <button class="tab" data-view="tasks">Tasks</button>
+        <button class="tab" data-view="monitor">System Monitor</button>
+        <button class="tab" data-view="host">Host</button>
+        <button class="tab" data-view="kanban">Kanban</button>
+        <button class="tab" data-view="docs">Docs</button>
+      </div>
+      <div class="topbar-right">
+        <span class="clock-chip"><span class="lbl">UTC</span><span id="clock">--:--:--</span></span>
+      </div>
     </div>
+    <div class="sub-line">Live read-only view of the crew — updates every few seconds.</div>
 
     <!-- COMMAND CENTER -->
     <section class="view active" id="view-command">
-      <div class="kpis">
-        <div class="kpi"><div class="label">Agents active</div><div class="value signal" id="kpi-active">—</div></div>
-        <div class="kpi"><div class="label">Turns today</div><div class="value" id="kpi-turns">—</div></div>
-        <div class="kpi"><div class="label">Est. cost today</div><div class="value gold" id="kpi-cost">—</div></div>
-        <div class="kpi"><div class="label">Errors today</div><div class="value coral" id="kpi-errors">—</div></div>
-      </div>
-      <div class="cols wide">
-        <div class="section">
-          <h2><span class="slash">//</span> Live feed</h2>
-          <div id="feed"><div class="empty">waiting for activity…</div></div>
+      <div class="bento">
+        <div class="panel hero b-8 rise">
+          <div class="orb"></div>
+          <div class="orb2"></div>
+          <div>
+            <div class="hero-status"><span class="live-dot"></span> Live · Foreman Coordination Layer</div>
+            <h1>One Foreman.<br /><em>four specialists.</em></h1>
+            <p>The Foreman is routing tasks across Radar, Quill, Wrench &amp; Ledger — each answering in its own Telegram channel.</p>
+          </div>
+          <div class="pill-row">
+            <span class="pill on" id="hero-active-pill">— / 5 active</span>
+            <span class="pill">telegram</span>
+          </div>
         </div>
-        <div class="section">
-          <h2><span class="slash">//</span> Crew status</h2>
-          <div id="mini-agents"></div>
+
+        <div class="panel accent b-4 rise" style="animation-delay:60ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Recent Activity</div>
+          <div class="rowlist" id="feed-mini" style="margin-top:14px; max-height:220px; overflow:auto;"></div>
+        </div>
+
+        <div class="panel stat b-3 rise" style="animation-delay:100ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Agents active</div>
+          <div class="stat-value signal" id="kpi-active">—</div>
+          <div class="stat-sub">of 5 in the fleet</div>
+        </div>
+        <div class="panel stat b-3 rise" style="animation-delay:140ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Turns today</div>
+          <div class="stat-value" id="kpi-turns">—</div>
+          <div class="stat-sub" id="kpi-turns-total">—</div>
+        </div>
+        <div class="panel stat b-3 rise" style="animation-delay:180ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Est. cost today</div>
+          <div class="stat-value gold" id="kpi-cost">—</div>
+          <div class="stat-sub" id="kpi-cost-total">—</div>
+        </div>
+        <div class="panel b-3 rise" style="animation-delay:220ms">
+          <div class="ring-wrap">
+            <div class="panel-eyebrow"><span class="dash"></span> Focus</div>
+            <svg class="ring-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" stroke-width="7" />
+              <circle id="focus-arc" cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="0 264" transform="rotate(-90 50 50)" />
+            </svg>
+            <div class="ring-pct" id="focus-pct" style="margin-top:-96px;">0%</div>
+            <div class="ring-label" id="focus-agent" style="margin-top:52px;">— of turns</div>
+          </div>
+        </div>
+
+        <div class="panel b-7 rise" style="animation-delay:260ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Fleet status</div>
+          <div id="fleet-list" style="margin-top:10px;"></div>
+        </div>
+        <div class="panel b-5 rise" style="animation-delay:300ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Errors today</div>
+          <div class="stat-value coral" id="kpi-errors">—</div>
+          <div class="stat-sub">tracked from the logbook — 0 is normal</div>
         </div>
       </div>
     </section>
 
     <!-- AGENTS -->
     <section class="view" id="view-agents">
-      <div class="grid" id="agent-cards"></div>
+      <div class="panel hero rise" style="min-height:150px;">
+        <div class="orb"></div>
+        <div>
+          <div class="hero-status"><span class="live-dot"></span> Fleet · Configuration</div>
+          <h1 style="font-size:clamp(24px,3vw,34px);">Five agents.<br /><em>one console.</em></h1>
+        </div>
+      </div>
+      <div class="bento" style="margin-top:14px;" id="agent-cards"></div>
     </section>
 
     <!-- TASKS -->
     <section class="view" id="view-tasks">
-      <div class="cols two">
-        <div class="section">
-          <h2><span class="slash">//</span> In progress</h2>
-          <div id="tasks-open"><div class="empty">nothing running</div></div>
+      <div class="bento">
+        <div class="panel accent b-6 rise">
+          <div class="panel-eyebrow"><span class="dash"></span> In progress</div>
+          <div class="rowlist" id="tasks-open" style="margin-top:14px;"></div>
         </div>
-        <div class="section">
-          <h2><span class="slash">//</span> Done today</h2>
-          <div id="tasks-done"><div class="empty">nothing yet</div></div>
+        <div class="panel b-6 rise" style="animation-delay:80ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Done today</div>
+          <div class="rowlist" id="tasks-done" style="margin-top:14px;"></div>
         </div>
       </div>
     </section>
 
     <!-- SYSTEM MONITOR -->
     <section class="view" id="view-monitor">
-      <div class="kpis">
-        <div class="kpi"><div class="label">Model</div><div class="value" id="mon-model" style="font-size:18px">—</div></div>
-        <div class="kpi"><div class="label">Tokens in / today</div><div class="value" id="mon-in" style="font-size:22px">—</div></div>
-        <div class="kpi"><div class="label">Tokens out / today</div><div class="value" id="mon-out" style="font-size:22px">—</div></div>
-        <div class="kpi"><div class="label">Est. cost (total)</div><div class="value gold" id="mon-total" style="font-size:22px">—</div></div>
-      </div>
-      <div class="section" style="margin-top:16px">
-        <h2><span class="slash">//</span> Cost &amp; usage by agent</h2>
-        <table>
-          <thead><tr><th>Agent</th><th style="text-align:right">Turns</th><th style="text-align:right">Tokens in</th><th style="text-align:right">Tokens out</th><th style="text-align:right">Est. cost</th></tr></thead>
-          <tbody id="mon-table"></tbody>
-        </table>
-        <p class="empty" style="margin-top:12px">Cost is an estimate from logged token counts at configured per-token prices. Not a billing source.</p>
+      <div class="bento">
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span> Model</div><div class="stat-value" id="mon-model" style="font-size:20px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span> Tokens in / today</div><div class="stat-value signal" id="mon-in" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span> Tokens out / today</div><div class="stat-value signal" id="mon-out" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span> Est. cost (total)</div><div class="stat-value gold" id="mon-total" style="font-size:26px;">—</div></div>
+        <div class="panel b-1 rise" style="animation-delay:160ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Cost &amp; usage by agent</div>
+          <table style="margin-top:14px;">
+            <thead><tr><th>Agent</th><th style="text-align:right">Turns</th><th style="text-align:right">Tokens in</th><th style="text-align:right">Tokens out</th><th style="text-align:right">Est. cost</th></tr></thead>
+            <tbody id="mon-table"></tbody>
+          </table>
+          <p class="empty" style="margin-top:14px;">Cost is an estimate from logged token counts at configured per-token prices. Not a billing source.</p>
+        </div>
       </div>
     </section>
 
     <!-- HOST -->
     <section class="view" id="view-host">
-      <div class="kpis">
-        <div class="kpi"><div class="label">Platform</div><div class="value" id="host-platform" style="font-size:20px">—</div></div>
-        <div class="kpi"><div class="label">Uptime</div><div class="value" id="host-uptime" style="font-size:20px">—</div></div>
-        <div class="kpi"><div class="label">Load avg (1m)</div><div class="value" id="host-load" style="font-size:20px">—</div></div>
-        <div class="kpi"><div class="label">Memory used</div><div class="value" id="host-mem" style="font-size:20px">—</div></div>
-      </div>
-      <div class="section" style="margin-top:16px">
-        <h2><span class="slash">//</span> Scheduled jobs</h2>
-        <div id="host-jobs"><div class="empty">checking…</div></div>
-        <p class="empty" style="margin-top:12px">launchd on macOS, systemd on Linux — filtered to this crew's own jobs.</p>
+      <div class="bento">
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span> Platform</div><div class="stat-value" id="host-platform" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span> Uptime</div><div class="stat-value" id="host-uptime" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span> Load avg (1m)</div><div class="stat-value" id="host-load" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span> Memory used</div><div class="stat-value" id="host-mem" style="font-size:24px;">—</div></div>
+        <div class="panel b-1 rise" style="animation-delay:160ms">
+          <div class="panel-eyebrow"><span class="dash"></span> Scheduled jobs</div>
+          <div class="rowlist" id="host-jobs" style="margin-top:14px;"></div>
+          <p class="empty" style="margin-top:14px;">launchd on macOS, systemd on Linux — filtered to this crew's own jobs.</p>
+        </div>
       </div>
     </section>
 
     <!-- KANBAN -->
     <section class="view" id="view-kanban">
-      <div class="kanban" id="kanban-board"></div>
+      <div class="panel rise">
+        <div class="kanban" id="kanban-board"></div>
+      </div>
     </section>
 
     <!-- DOCS -->
     <section class="view" id="view-docs">
       <div class="docs">
-        <div class="section">
-          <h2><span class="slash">//</span> Notes</h2>
-          <div id="doc-list"><div class="empty">no notes yet</div></div>
-          <div class="doc-toolbar" style="margin-top:12px">
+        <div class="panel rise">
+          <div class="panel-eyebrow"><span class="dash"></span> Notes</div>
+          <div id="doc-list" style="margin-top:12px;"></div>
+          <div class="doc-toolbar" style="margin-top:14px;">
             <input id="doc-new-name" placeholder="new-note.md" />
-            <button class="btn" id="doc-new-btn">New</button>
           </div>
+          <button class="btn" id="doc-new-btn" style="width:100%;">New note</button>
         </div>
-        <div class="section doc-editor">
-          <h2><span class="slash">//</span> <span id="doc-current">Select a note</span></h2>
-          <textarea id="doc-body" placeholder="Nothing selected." disabled></textarea>
-          <div class="doc-toolbar" style="margin-top:10px">
+        <div class="panel doc-editor rise" style="animation-delay:60ms">
+          <div class="panel-eyebrow"><span class="dash"></span> <span id="doc-current">Select a note</span></div>
+          <textarea id="doc-body" placeholder="Nothing selected." disabled style="margin-top:12px;"></textarea>
+          <div class="doc-toolbar" style="margin-top:12px;">
             <button class="btn" id="doc-save-btn" disabled>Save</button>
             <button class="btn danger" id="doc-delete-btn" disabled>Delete</button>
           </div>
@@ -207,7 +412,10 @@
       </div>
     </section>
 
-    <div class="status" id="status">connecting…</div>
+    <div class="status-line">
+      <span id="status">connecting…</span>
+      <span class="on">● read-only fleet data</span>
+    </div>
 
     <script>
       const ROLES = { foreman: "coordinator", radar: "research", quill: "writing", wrench: "engineering", ledger: "numbers" };
@@ -215,6 +423,12 @@
       const money = (n) => "$" + (Number(n) || 0).toFixed(Number(n) >= 1 ? 2 : 4);
       const num = (n) => (Number(n) || 0).toLocaleString();
       const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+      function tickClock() {
+        document.getElementById("clock").textContent = new Date().toISOString().slice(11, 19);
+      }
+      tickClock();
+      setInterval(tickClock, 1000);
 
       document.getElementById("tabs").addEventListener("click", (e) => {
         const btn = e.target.closest(".tab"); if (!btn) return;
@@ -242,7 +456,7 @@
           document.getElementById("host-load").textContent = (h.loadAvg[0] || 0).toFixed(2);
           document.getElementById("host-mem").textContent = fmtBytes(h.memUsed) + " / " + fmtBytes(h.memTotal);
           document.getElementById("host-jobs").innerHTML = h.jobs && h.jobs.length
-            ? h.jobs.map((j) => '<div class="row"><span class="a">' + esc(j.status || j.active || "") + '</span><span class="s">' + esc(j.label) + "</span></div>").join("")
+            ? h.jobs.map((j) => '<div class="rrow"><span class="a">' + esc(j.status || j.active || "") + '</span><span class="s">' + esc(j.label) + "</span></div>").join("")
             : '<div class="empty">no jobs found for this crew</div>';
         } catch { /* leave last-known values on screen */ }
       }
@@ -334,17 +548,28 @@
         loadDocs();
       });
 
-      function agentCard(a, compact) {
+      function fleetRow(a) {
         const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
-        if (compact) {
-          return '<div class="row"><span class="a">' + dot + " " + a.agent + '</span>' +
-            '<span class="k">' + (ROLES[a.agent] || "") + '</span>' +
-            '<span class="s" style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim)">' + fmt(a.lastActivity) + '</span></div>';
-        }
-        return '<div class="card"><div class="name">' + dot + a.agent + '</div>' +
+        return '<div class="fleet-row">' + dot +
+          '<span class="fleet-name">' + a.agent + '</span>' +
+          '<span class="fleet-role">' + (ROLES[a.agent] || "") + '</span>' +
+          '<span class="fleet-meta"><span>turns <b>' + num(a.turns) + '</b></span><span>cost <b>' + money(a.cost) + '</b></span><span>' + fmt(a.lastActivity) + '</span></span>' +
+          '</div>';
+      }
+
+      function agentCard(a, i) {
+        const dot = '<span class="dot ' + (a.status === "active" ? "active" : "") + '"></span>';
+        return '<div class="panel agent-card b-4 rise" style="animation-delay:' + (i * 40) + 'ms">' +
+          '<div class="name-row">' + dot + a.agent + '</div>' +
           '<div class="role">' + (ROLES[a.agent] || "") + '</div>' +
-          '<div class="meta"><span>turns <b>' + num(a.turns) + '</b></span><span>cost <b>' + money(a.cost) + '</b></span></div>' +
-          '<div class="meta"><span>last</span><span>' + fmt(a.lastActivity) + '</span></div></div>';
+          '<div class="meta-grid">' +
+            '<div class="meta-tile"><div class="l">Turns</div><div class="v">' + num(a.turns) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Cost</div><div class="v">' + money(a.cost) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Tok in</div><div class="v">' + num(a.tokIn) + '</div></div>' +
+            '<div class="meta-tile"><div class="l">Tok out</div><div class="v">' + num(a.tokOut) + '</div></div>' +
+          '</div>' +
+          '<div class="stat-sub">last active ' + fmt(a.lastActivity) + '</div>' +
+        '</div>';
       }
 
       async function tick() {
@@ -357,23 +582,38 @@
           ]);
 
           document.getElementById("kpi-active").textContent = stats.agentsActive + " / " + stats.agentsTotal;
+          document.getElementById("hero-active-pill").textContent = stats.agentsActive + " / " + stats.agentsTotal + " active";
           document.getElementById("kpi-turns").textContent = num(stats.turnsToday);
+          document.getElementById("kpi-turns-total").textContent = num(stats.turnsTotal) + " all-time";
           document.getElementById("kpi-cost").textContent = money(stats.costToday);
+          document.getElementById("kpi-cost-total").textContent = money(stats.costTotal) + " all-time";
           document.getElementById("kpi-errors").textContent = num(stats.errorsToday);
 
-          document.getElementById("feed").innerHTML = events.length
-            ? events.map((e) => '<div class="row"><span class="t">' + fmt(e.ts) + '</span><span class="a">' + e.agent +
+          const feedHtml = events.length
+            ? events.map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="a">' + e.agent +
                 '</span><span class="k">' + e.kind + '</span><span class="s">' + esc(e.summary) + "</span></div>").join("")
             : '<div class="empty">no events yet</div>';
+          document.getElementById("feed-mini").innerHTML = events.length
+            ? events.slice(0, 8).map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="s">' + esc(e.summary) + "</span></div>").join("")
+            : '<div class="empty">waiting for activity…</div>';
 
-          document.getElementById("mini-agents").innerHTML = agents.map((a) => agentCard(a, true)).join("");
-          document.getElementById("agent-cards").innerHTML = agents.map((a) => agentCard(a, false)).join("");
+          document.getElementById("fleet-list").innerHTML = agents.map(fleetRow).join("");
+          document.getElementById("agent-cards").innerHTML = agents.map(agentCard).join("");
+
+          // focus ring: agent with the largest share of today's turns
+          const top = agents.reduce((best, a) => (a.turns > (best?.turns || 0) ? a : best), null);
+          const totalTurns = agents.reduce((s, a) => s + (Number(a.turns) || 0), 0);
+          const pct = top && totalTurns ? Math.round((top.turns / totalTurns) * 100) : 0;
+          document.getElementById("focus-pct").textContent = pct + "%";
+          document.getElementById("focus-agent").textContent = (top ? top.agent : "—") + " of turns";
+          const circumference = 2 * Math.PI * 42;
+          document.getElementById("focus-arc").setAttribute("stroke-dasharray", (circumference * pct / 100).toFixed(1) + " " + circumference.toFixed(1));
 
           document.getElementById("tasks-open").innerHTML = tasks.open && tasks.open.length
-            ? tasks.open.map((t) => '<div class="row"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) + "</span></div>").join("")
+            ? tasks.open.map((t) => '<div class="rrow"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) + "</span></div>").join("")
             : '<div class="empty">nothing running</div>';
           document.getElementById("tasks-done").innerHTML = tasks.done && tasks.done.length
-            ? tasks.done.map((t) => '<div class="row"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) +
+            ? tasks.done.map((t) => '<div class="rrow"><span class="a">' + t.agent + '</span><span class="s">' + esc(t.summary) +
                 '</span><span class="t" style="margin-left:auto">' + fmt(t.ts) + "</span></div>").join("")
             : '<div class="empty">nothing yet</div>';
 
