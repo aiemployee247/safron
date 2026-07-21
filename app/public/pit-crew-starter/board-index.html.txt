@@ -1191,10 +1191,12 @@
         foreman: 0xeac266, radar: 0x4bc6fa, quill: 0xad8cff, wrench: 0xff7c68, ledger: 0x00c89c,
       };
       const LAYOUT_ORDER = ["radar", "quill", "wrench", "ledger"]; // ring around the Foreman's tower
+      const CAMERA_TARGET = { x: 9, y: 8, z: 11 };
+      const CAMERA_START = { x: 20, y: 17, z: 24 };
 
       let officeStarted = false;
-      let scene, camera, renderer, controls, raycaster, mouse, animId;
-      const buildings = {}; // agent key -> { mesh, glow, targetEmissive }
+      let scene, camera, renderer, controls, raycaster, mouse, clock;
+      const buildings = {}; // agent key -> { group, glowMats, glow, baseY, phase, targetEmissive, targetGlow, lastTurns }
 
       async function initOffice() {
         if (officeStarted) return;
@@ -1214,13 +1216,14 @@
       function buildScene(THREE, OrbitControls) {
         const wrap = document.getElementById("office-canvas-wrap");
         const width = wrap.clientWidth, height = wrap.clientHeight;
+        clock = new THREE.Clock();
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x04060c);
-        scene.fog = new THREE.Fog(0x04060c, 14, 34);
+        scene.fog = new THREE.Fog(0x04060c, 14, 36);
 
-        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        camera.position.set(9, 8, 11);
+        camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+        camera.position.set(CAMERA_START.x, CAMERA_START.y, CAMERA_START.z);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -1234,11 +1237,13 @@
         controls.minDistance = 5;
         controls.maxDistance = 26;
         controls.maxPolarAngle = Math.PI / 2.05;
-        controls.target.set(0, 1, 0);
+        controls.target.set(0, 1.4, 0);
+        controls.enabled = false; // re-enabled once the intro fly-in finishes
 
         scene.add(new THREE.AmbientLight(0x445566, 1.1));
-        const moon = new THREE.DirectionalLight(0x8fa8ff, 0.5);
+        const moon = new THREE.DirectionalLight(0x8fa8ff, 0.55);
         moon.position.set(-8, 12, -6);
+        moon.castShadow = true;
         scene.add(moon);
 
         // ground
@@ -1252,13 +1257,14 @@
         grid.position.y = 0.01;
         scene.add(grid);
 
-        // Foreman's HQ tower, centre
-        addBuilding(THREE, "foreman", 0, 0, 1.6, 5.2);
-        // four specialists in a ring
+        // Foreman's HQ tower, centre; four specialists ringed around it.
+        addBuilding(THREE, "foreman", 0, 0, 1.6, 5.2, "hq");
         const radius = 5.2;
+        const KIND = { radar: "radar", quill: "spire", wrench: "gantry", ledger: "facade" };
         LAYOUT_ORDER.forEach((key, i) => {
           const angle = (i / LAYOUT_ORDER.length) * Math.PI * 2;
-          addBuilding(THREE, key, Math.cos(angle) * radius, Math.sin(angle) * radius, 1.1, 3.2);
+          addBuilding(THREE, key, Math.cos(angle) * radius, Math.sin(angle) * radius, 1.1, 3.2, KIND[key]);
+          addPath(THREE, Math.cos(angle) * radius, Math.sin(angle) * radius, key);
         });
 
         raycaster = new THREE.Raycaster();
@@ -1269,29 +1275,134 @@
 
         document.getElementById("office-loading").style.display = "none";
         renderLegend();
+        flyIn(THREE);
         animate(THREE);
         pollOfficeData();
         setInterval(pollOfficeData, 4000);
       }
 
-      function addBuilding(THREE, key, x, z, footprint, height) {
+      // Cinematic intro: ease the camera in from a pulled-back establishing
+      // shot to the working default, then hand control to OrbitControls.
+      function flyIn(THREE) {
+        const duration = 1600;
+        const start = performance.now();
+        function step(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+          camera.position.set(
+            CAMERA_START.x + (CAMERA_TARGET.x - CAMERA_START.x) * eased,
+            CAMERA_START.y + (CAMERA_TARGET.y - CAMERA_START.y) * eased,
+            CAMERA_START.z + (CAMERA_TARGET.z - CAMERA_START.z) * eased,
+          );
+          camera.lookAt(0, 1.4, 0);
+          if (t < 1) requestAnimationFrame(step);
+          else controls.enabled = true;
+        }
+        requestAnimationFrame(step);
+      }
+
+      // Ground path from a specialist's plot back to HQ — glows when either
+      // end has recent activity. An honest stand-in for "handoffs": we don't
+      // track explicit agent-to-agent handoffs, just recent activity at
+      // either end of the path.
+      function addPath(THREE, x, z, key) {
+        const points = [new THREE.Vector3(x * 0.28, 0.03, z * 0.28), new THREE.Vector3(x * 0.92, 0.03, z * 0.92)];
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({ color: AGENT_COLORS[key], transparent: true, opacity: 0.18 });
+        const line = new THREE.Line(geo, mat);
+        scene.add(line);
+        if (buildings[key]) buildings[key].pathMat = mat;
+      }
+
+      // Role-flavoured silhouettes, built entirely from primitives — no
+      // external models or textures, just boxes/cylinders/cones composed
+      // per role so each building reads differently at a glance.
+      function addBuilding(THREE, key, x, z, footprint, height, kind) {
         const color = AGENT_COLORS[key] || 0x888888;
-        const geo = new THREE.BoxGeometry(footprint, height, footprint);
-        const mat = new THREE.MeshStandardMaterial({
-          color: 0x11151f, emissive: new THREE.Color(color), emissiveIntensity: 0.12,
-          roughness: 0.6, metalness: 0.15,
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+        const glowMats = [];
+
+        const bodyMat = new THREE.MeshStandardMaterial({
+          color: 0x11151f, emissive: new THREE.Color(color), emissiveIntensity: 0.12, roughness: 0.6, metalness: 0.15,
         });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x, height / 2, z);
-        mesh.castShadow = true;
-        mesh.userData.agentKey = key;
-        scene.add(mesh);
+        glowMats.push(bodyMat);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(footprint, height, footprint), bodyMat);
+        body.position.y = height / 2;
+        body.castShadow = true;
+        body.userData.agentKey = key;
+        group.add(body);
+
+        // window facade — a small emissive grid on the two front faces, lit
+        // by the same intensity as the body ("lit windows mean live work").
+        const winMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0.15 });
+        glowMats.push(winMat);
+        const rows = Math.max(2, Math.round(height / 0.7)), cols = kind === "facade" ? 4 : 2;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.2), winMat);
+            const cx = (c - (cols - 1) / 2) * (footprint / (cols + 0.6));
+            win.position.set(cx, 0.5 + r * 0.65, footprint / 2 + 0.01);
+            group.add(win);
+            const win2 = win.clone();
+            win2.position.z = -footprint / 2 - 0.01;
+            win2.rotation.y = Math.PI;
+            group.add(win2);
+          }
+        }
+
+        // roof, per role
+        let roof = null, beacon = null, dish = null;
+        if (kind === "hq") {
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 0.6, 0.9, footprint * 0.6), bodyMat);
+          roof.position.y = height + 0.45;
+          group.add(roof);
+          beacon = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: new THREE.Color(color), emissiveIntensity: 0.6 }));
+          beacon.position.y = height + 1.05;
+          glowMats.push(beacon.material);
+          group.add(beacon);
+        } else if (kind === "radar") {
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8), bodyMat);
+          mast.position.y = height + 0.45;
+          group.add(mast);
+          dish = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20), new THREE.MeshStandardMaterial({ color: 0x223047, emissive: new THREE.Color(color), emissiveIntensity: 0.3, side: THREE.DoubleSide }));
+          dish.position.y = height + 0.95;
+          dish.rotation.x = -Math.PI / 3.2;
+          glowMats.push(dish.material);
+          group.add(dish);
+        } else if (kind === "spire") {
+          roof = new THREE.Mesh(new THREE.ConeGeometry(footprint * 0.62, 1.1, 4), bodyMat);
+          roof.position.y = height + 0.55;
+          roof.rotation.y = Math.PI / 4;
+          group.add(roof);
+        } else if (kind === "gantry") {
+          [-1, 1].forEach((side) => {
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(0.22, height * 0.55, 0.22), bodyMat);
+            beam.position.set(side * (footprint / 2 + 0.12), height * 0.3, 0);
+            group.add(beam);
+          });
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 1.1, 0.3, footprint * 1.1), bodyMat);
+          roof.position.y = height + 0.15;
+          group.add(roof);
+        } else if (kind === "facade") {
+          roof = new THREE.Mesh(new THREE.BoxGeometry(footprint * 0.9, 0.25, footprint * 0.9), bodyMat);
+          roof.position.y = height + 0.12;
+          group.add(roof);
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), bodyMat);
+          antenna.position.y = height + 0.55;
+          group.add(antenna);
+        }
+
+        scene.add(group);
 
         const glow = new THREE.PointLight(color, 0, 6);
-        glow.position.set(x, height + 0.6, z);
-        scene.add(glow);
+        glow.position.set(0, height + 0.6, 0);
+        group.add(glow);
 
-        buildings[key] = { mesh, mat, glow, targetEmissive: 0.12, targetGlow: 0 };
+        buildings[key] = {
+          group, glowMats, glow, dish, baseY: 0, phase: Math.random() * Math.PI * 2,
+          targetEmissive: 0.12, targetGlow: 0, lastTurns: null, flashUntil: 0,
+        };
       }
 
       function onResize() {
@@ -1309,7 +1420,8 @@
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
-        const meshes = Object.values(buildings).map((b) => b.mesh);
+        const meshes = [];
+        for (const key in buildings) buildings[key].group.traverse((o) => { if (o.userData.agentKey) meshes.push(o); });
         const hit = raycaster.intersectObjects(meshes)[0];
         if (hit && hit.object.userData.agentKey && window.openDrawer) {
           window.openDrawer(hit.object.userData.agentKey);
@@ -1317,12 +1429,21 @@
       }
 
       function animate(THREE) {
-        animId = requestAnimationFrame(() => animate(THREE));
+        requestAnimationFrame(() => animate(THREE));
         controls.update();
+        const t = clock.getElapsedTime();
         for (const key in buildings) {
           const b = buildings[key];
-          b.mat.emissiveIntensity += (b.targetEmissive - b.mat.emissiveIntensity) * 0.08;
-          b.glow.intensity += (b.targetGlow - b.glow.intensity) * 0.08;
+          const flashing = performance.now() < b.flashUntil;
+          const target = flashing ? 1.5 : b.targetEmissive;
+          const current = b.glowMats[0].emissiveIntensity + (target - b.glowMats[0].emissiveIntensity) * 0.12;
+          b.glowMats.forEach((m) => { m.emissiveIntensity = current; });
+          b.glow.intensity += ((flashing ? 4 : b.targetGlow) - b.glow.intensity) * 0.12;
+          if (b.pathMat) b.pathMat.opacity += ((b.targetEmissive > 0.4 ? 0.7 : 0.18) - b.pathMat.opacity) * 0.08;
+          // gentle idle bob + sway, per-building phase so they don't move in lockstep
+          b.group.position.y = b.baseY + Math.sin(t * 0.6 + b.phase) * 0.035;
+          b.group.rotation.y = Math.sin(t * 0.3 + b.phase) * 0.015;
+          if (b.dish) b.dish.rotation.z = t * 0.25 + b.phase;
         }
         renderer.render(scene, camera);
       }
@@ -1341,6 +1462,9 @@
             if (active) lit++;
             b.targetEmissive = active ? 0.85 : 0.12;
             b.targetGlow = active ? 2.4 : 0;
+            // a fresh turn since the last poll gets a brief bright flash on top of the steady glow
+            if (b.lastTurns !== null && a.turns > b.lastTurns) b.flashUntil = performance.now() + 900;
+            b.lastTurns = a.turns;
           });
           document.getElementById("office-lights").textContent = lit;
           document.getElementById("office-turns").textContent = stats.turnsToday ?? 0;
