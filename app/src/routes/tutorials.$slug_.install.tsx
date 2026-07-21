@@ -24,10 +24,10 @@ export const Route = createFileRoute("/tutorials/$slug_/install")({
 
 function InstallPage() {
   const { meta, viewer } = Route.useLoaderData();
-  const hasMacInstaller = meta.slug === "pit-crew-mission-control";
+  const hasMacInstaller = ["pit-crew-mission-control", "hermes-agent-setup"].includes(meta.slug);
   const [os, setOs] = useState<"linux" | "mac">("linux");
   const slug = os === "mac" ? `${meta.slug}-mac` : meta.slug;
-  const command = `curl -fsSL https://agent-garage.higgsfield.app/install/${slug} | bash`;
+  const command = `curl -fsSL https://agent.qepilot.com/install/${slug} | bash`;
 
   return (
     <main className="blueprint-grid px-4 py-14 md:px-6 md:py-20">

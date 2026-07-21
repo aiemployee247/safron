@@ -9,7 +9,7 @@ const installers: Record<string, string> = {
 # Miniflare/workerd, with a local SQLite-backed D1). Run on Debian/Ubuntu.
 set -euo pipefail
 
-BASE="https://agent-garage.higgsfield.app"
+BASE="https://agent.qepilot.com"
 ROOT=/opt/agent-garage
 
 echo "== Agent Garage self-host installer =="
@@ -70,13 +70,13 @@ echo "The site is serving on 127.0.0.1:8090. Next: the agent.qepilot.com Traefik
 `,
   'pit-crew-mission-control': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Pit Crew (5-agent Telegram fleet + Pit Board)
-# https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control
+# https://agent.qepilot.com/tutorials/pit-crew-mission-control
 # Installs a REAL, runnable fleet: five topic-routed agents on Telegram plus a
 # live read-only Pit Board dashboard. Run on a fresh Debian/Ubuntu box as a
 # sudo-capable user.
 set -euo pipefail
 
-BASE="https://agent-garage.higgsfield.app/pit-crew-starter"
+BASE="https://agent.qepilot.com/pit-crew-starter"
 ROOT=/opt/pit-crew
 
 echo "== Agent Garage — Pit Crew installer =="
@@ -177,11 +177,11 @@ echo "The Foreman answers now. To route the specialists to their own Telegram"
 echo "topics, fill $ROOT/routing.json with your topic thread ids (tutorial Prompt 7-8),"
 echo "then: sudo systemctl restart pit-crew-fleet"
 echo ""
-echo "Tutorial: https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control"
+echo "Tutorial: https://agent.qepilot.com/tutorials/pit-crew-mission-control"
 `,
   'pit-crew-mission-control-mac': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Pit Crew, macOS local edition
-# https://agent-garage.higgsfield.app/tutorials/pit-crew-mission-control
+# https://agent.qepilot.com/tutorials/pit-crew-mission-control
 # Installs the same 5-agent Telegram fleet + Pit Board dashboard as the VPS
 # installer, but locally on your Mac via launchd (no sudo, no systemd).
 # Safe to re-run: it detects an existing install and asks before touching it.
@@ -368,7 +368,7 @@ printf '\n  Tutorial: https://agent.qepilot.com/tutorials/pit-crew-mission-contr
 `,
   'hermes-agent-setup': String.raw`#!/usr/bin/env bash
 # Agent Garage — Hermes Agent setup
-# https://agent-garage.higgsfield.app/tutorials/hermes-agent-setup
+# https://agent.qepilot.com/tutorials/hermes-agent-setup
 # Hermes Agent is an open-source project by NousResearch (github.com/NousResearch/hermes-agent),
 # not by Agent Garage. This is a thin, honest hand-off — not a fork or a rehost — to
 # their official installer. Run it directly yourself if you'd rather skip the middleman:
@@ -389,11 +389,93 @@ curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 
 echo ""
 echo "Done. Run 'hermes' to launch the setup wizard (model, API key, Telegram/Discord)."
-echo "Tutorial: https://agent-garage.higgsfield.app/tutorials/hermes-agent-setup"
+echo "Tutorial: https://agent.qepilot.com/tutorials/hermes-agent-setup"
+`,
+  'hermes-agent-setup-mac': String.raw`#!/usr/bin/env bash
+# Agent Garage -> Hermes Agent setup, macOS local edition
+# https://agent.qepilot.com/tutorials/hermes-agent-setup
+# Hermes Agent is an open-source project by NousResearch, not by Agent Garage.
+# Their own installer is already cross-platform and already handles re-runs
+# safely (it updates an existing ~/.hermes in place, stashing local changes).
+# What this wrapper adds: checking for an existing install FIRST and letting
+# you choose update-in-place vs a full wipe, before anything runs.
+set -euo pipefail
+
+HERMES_HOME="$HOME/.hermes"
+
+if [ -t 1 ]; then B=$'\033[1m'; DIM=$'\033[2m'; G=$'\033[32m'; R=$'\033[31m'; ACC=$'\033[33m'; Z=$'\033[0m'
+else B=""; DIM=""; G=""; R=""; ACC=""; Z=""; fi
+step() { printf '\n%s%s==> %s%s\n' "$B" "$ACC" "$*" "$Z"; }
+ok()   { printf '  %s✓%s %s\n' "$G" "$Z" "$*"; }
+warn() { printf '  %s!%s %s\n' "$ACC" "$Z" "$*"; }
+err()  { printf '  %s✗%s %s\n' "$R" "$Z" "$*"; }
+
+printf '\n%s%sAgent Garage -> Hermes Agent setup (macOS)%s\n' "$B" "$ACC" "$Z"
+printf '%sHermes Agent is an open-source project by NousResearch, not by Agent Garage.%s\n' "$DIM" "$Z"
+
+step "Checking your OS"
+if [ "$(uname -s)" != "Darwin" ]; then
+  err "This installer is for macOS only."
+  printf '  Run the general installer instead (their script self-detects Linux):\n'
+  printf '  %scurl -fsSL https://agent.qepilot.com/install/hermes-agent-setup | bash%s\n' "$DIM" "$Z"
+  exit 1
+fi
+ok "macOS detected ($(sw_vers -productVersion 2>/dev/null || echo unknown))"
+
+step "Checking for an existing install"
+FOUND=0
+command -v hermes >/dev/null 2>&1 && FOUND=1
+[ -d "$HERMES_HOME" ] && FOUND=1
+
+MODE="fresh"
+if [ "$FOUND" = "1" ]; then
+  warn "Found an existing Hermes Agent install."
+  if command -v hermes >/dev/null 2>&1; then
+    printf '    %s\n' "$(hermes --version 2>&1 | head -1)"
+  fi
+  [ -d "$HERMES_HOME" ] && printf '    %s at %s\n' "$(du -sh "$HERMES_HOME" 2>/dev/null | awk '{print $1}') on disk" "$HERMES_HOME"
+  printf '\n  %sU%s  Update in place — safe, keeps your local changes (recommended)\n' "$B" "$Z"
+  printf '  %sR%s  Wipe %s and reinstall from scratch\n' "$B" "$Z" "$HERMES_HOME"
+  printf '  %sN%s  Cancel, no changes\n' "$B" "$Z"
+  read -r -p "  Choice [U/r/N]: " REPLY </dev/tty || REPLY=""
+  case "$REPLY" in
+    r|R)
+      read -r -p "  This permanently deletes $HERMES_HOME. Continue? [y/N] " CONFIRM </dev/tty || CONFIRM=""
+      case "$CONFIRM" in
+        y|Y|yes|YES)
+          rm -rf "$HERMES_HOME"
+          ok "Removed. Starting fresh."
+          MODE="fresh"
+          ;;
+        *) printf '\n  Cancelled. No changes made.\n\n'; exit 0 ;;
+      esac
+      ;;
+    u|U|"")
+      ok "Updating in place — their installer handles this safely."
+      MODE="update"
+      ;;
+    *) printf '\n  Cancelled. No changes made.\n\n'; exit 0 ;;
+  esac
+else
+  ok "No existing install found — clean start."
+fi
+
+step "Handing off to NousResearch's official installer"
+printf '  This installs Python 3.11 (via uv), Node 22, and %s ~/.hermes.\n' "$([ "$MODE" = update ] && echo 'updates' || echo 'clones')"
+read -r -p "  Continue? [Y/n] " GO </dev/tty || GO="y"
+case "$GO" in
+  n|N|no|NO) printf '\n  Cancelled. No changes made.\n\n'; exit 0 ;;
+esac
+
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+
+step "Done"
+printf "  Run %s'hermes'%s to launch the setup wizard (model, API key, Telegram/Discord).\n" "$B" "$Z"
+printf '  Tutorial: https://agent.qepilot.com/tutorials/hermes-agent-setup\n\n'
 `,
   'telegram-ops-bot': String.raw`#!/usr/bin/env bash
 # Agent Garage auto-installer — Telegram Ops Bot
-# https://agent-garage.higgsfield.app/tutorials/telegram-ops-bot
+# https://agent.qepilot.com/tutorials/telegram-ops-bot
 # Run on a fresh Debian/Ubuntu box as a sudo-capable user.
 set -euo pipefail
 
@@ -497,7 +579,7 @@ sudo systemctl enable --now ops-bot
 
 echo ""
 echo "== Done. Send /ping to your bot on Telegram — it should answer 'on the bench'. =="
-echo "Full tutorial: https://agent-garage.higgsfield.app/tutorials/telegram-ops-bot"
+echo "Full tutorial: https://agent.qepilot.com/tutorials/telegram-ops-bot"
 `,
 }
 
