@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    runs-on: arc-runners-frontend
+    runs-on: ubuntu-latest
     name: Validate template
     # The app project lives in app/ (ci/ holds the deploy config, AGENTS.md +
     # skills/ stay at root). Every build step runs there.
