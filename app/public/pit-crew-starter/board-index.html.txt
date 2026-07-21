@@ -8,8 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:ital,wght@0,600;1,500;1,600&display=swap"
     />
+    <!-- Lucide — a small, MIT-licensed icon set (not exclusive to any one
+         product, same idea as using a public font). Renders <i data-lucide="x">
+         tags into inline SVGs after the DOM is ready. -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <!-- Three.js loads lazily (only when the Office tab is opened), via an
          import map so the module script can just `import * as THREE from "three"`.
          This is the one external dependency in the whole dashboard — everything
@@ -28,6 +32,7 @@
         --iris: #ad8cff; --sky: #4bc6fa; --coral: #ff7c68; --coral-dim: rgba(255, 124, 104, 0.14);
         --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
         --sans: "Work Sans", system-ui, sans-serif;
+        --serif: "Fraunces", Georgia, serif;
         --r-lg: 26px; --r-md: 16px; --r-sm: 10px;
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,7 +81,7 @@
         font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint);
         background: none; border: 1px solid transparent; border-radius: 999px; padding: 8px 13px; cursor: pointer; transition: all 0.15s;
       }
-      .tab:hover { color: var(--ink); background: var(--panel-hi); }
+      .tab:hover { color: var(--ink); background: var(--panel-hi); transform: translateY(-1px); }
       .tab.active { color: var(--bg); background: var(--gold); font-weight: 700; }
       .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
       .clock-chip {
@@ -112,7 +117,11 @@
         display: flex; align-items: center; gap: 8px;
       }
       .panel-eyebrow .dash { width: 18px; height: 1px; background: var(--line-hi); }
+      .panel-eyebrow svg { width: 12px; height: 12px; color: var(--gold); flex: none; }
+      .accent .panel-eyebrow svg { color: var(--signal); }
       .panel-title { font-size: 14px; color: var(--ink); margin-top: 6px; font-weight: 600; }
+      .panel { transition: border-color 0.2s, transform 0.2s; }
+      .panel:hover { border-color: var(--line-hi); }
 
       /* hero */
       .hero {
@@ -131,14 +140,16 @@
       .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); position: relative; }
       .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--signal); animation: pulse-ring 2.2s ease-out infinite; }
       .hero h1 {
-        font-size: clamp(28px, 4vw, 42px); line-height: 1; letter-spacing: -0.02em; margin-top: 12px; position: relative; z-index: 1; font-weight: 800;
+        font-family: var(--sans); font-size: clamp(28px, 4vw, 42px); line-height: 1; letter-spacing: -0.02em;
+        margin-top: 12px; position: relative; z-index: 1; font-weight: 800;
       }
-      .hero h1 em { font-style: normal; color: var(--gold); }
+      .hero h1 em { font-family: var(--serif); font-style: italic; font-weight: 600; color: var(--gold); }
       .hero p { color: var(--dim); font-size: 13px; max-width: 420px; margin-top: 10px; position: relative; z-index: 1; }
       .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; position: relative; z-index: 1; }
       .pill {
         font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px;
-        border-radius: 999px; border: 1px solid var(--line-hi); color: var(--dim); background: rgba(255,255,255,0.03);
+        border-radius: 999px; border: 1px solid var(--line-hi); color: var(--dim); background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(6px); transition: border-color 0.15s, color 0.15s;
       }
       .pill.on { background: var(--signal-dim); border-color: rgba(0,200,156,0.35); color: var(--signal); }
 
@@ -148,14 +159,17 @@
 
       /* stat tiles */
       .stat { display: flex; flex-direction: column; gap: 6px; min-height: 128px; }
-      .stat-value { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: auto; }
+      .stat-value {
+        font-family: var(--serif); font-size: 58px; font-weight: 600; letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums; margin-top: auto; line-height: 0.95;
+      }
       .stat-value.gold { color: var(--gold); } .stat-value.signal { color: var(--signal); } .stat-value.coral { color: var(--coral); }
       .stat-sub { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.05em; }
 
       /* focus ring */
       .ring-wrap { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
       .ring-svg { width: 132px; height: 132px; }
-      .ring-pct { font-size: 34px; font-weight: 800; }
+      .ring-pct { font-family: var(--serif); font-size: 40px; font-weight: 600; }
       .ring-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
 
       /* rows / lists */
@@ -181,6 +195,7 @@
 
       /* agent bento cards */
       .agent-card { display: flex; flex-direction: column; gap: 10px; min-height: 170px; }
+      .agent-card:hover { border-color: var(--gold); transform: translateY(-3px); }
       .agent-card .name-row { display: flex; align-items: center; gap: 8px; font-weight: 700; text-transform: capitalize; font-size: 15px; }
       .agent-card .role { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
       .agent-card .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
@@ -242,7 +257,7 @@
         font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink);
         background: rgba(255,255,255,0.04); border: 1px solid var(--line-hi); border-radius: var(--r-sm); padding: 9px 14px; cursor: pointer; transition: all 0.15s;
       }
-      .btn:hover { border-color: var(--gold); color: var(--gold); }
+      .btn:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
       .btn.danger:hover { border-color: var(--coral); color: var(--coral); }
       .btn:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--faint); }
 
@@ -280,8 +295,9 @@
       .drawer-close {
         position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; border-radius: 50%;
         background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); color: var(--dim); cursor: pointer;
+        transition: transform 0.2s, color 0.15s, border-color 0.15s;
       }
-      .drawer-close:hover { color: var(--gold); border-color: var(--gold); }
+      .drawer-close:hover { color: var(--gold); border-color: var(--gold); transform: rotate(90deg); }
       .model-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
       .model-row:last-child { border-bottom: 0; }
       .model-row .n { font-family: var(--mono); color: var(--ink); }
@@ -313,8 +329,9 @@
       .chat-input-row textarea:focus { outline: none; border-color: var(--gold); }
       .chat-send {
         width: 42px; height: 42px; flex: none; border-radius: var(--r-sm); background: var(--gold); border: 0; color: var(--bg);
-        cursor: pointer; font-weight: 700; display: grid; place-items: center;
+        cursor: pointer; font-weight: 700; display: grid; place-items: center; transition: transform 0.2s;
       }
+      .chat-send:hover:not(:disabled) { transform: scale(1.08) rotate(8deg); }
       .chat-send:disabled { opacity: 0.4; cursor: default; }
 
       /* content stats strip */
@@ -439,28 +456,28 @@
         </div>
 
         <div class="panel accent b-4 rise" style="animation-delay:60ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Recent Activity</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="zap"></i> Recent Activity</div>
           <div class="rowlist" id="feed-mini" style="margin-top:14px; max-height:220px; overflow:auto;"></div>
         </div>
 
         <div class="panel stat b-3 rise" style="animation-delay:100ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Agents active</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Agents active</div>
           <div class="stat-value signal" id="kpi-active">—</div>
           <div class="stat-sub">of 5 in the fleet</div>
         </div>
         <div class="panel stat b-3 rise" style="animation-delay:140ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Turns today</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="activity"></i> Turns today</div>
           <div class="stat-value" id="kpi-turns">—</div>
           <div class="stat-sub" id="kpi-turns-total">—</div>
         </div>
         <div class="panel stat b-3 rise" style="animation-delay:180ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Est. cost today</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="circle-dollar-sign"></i> Est. cost today</div>
           <div class="stat-value gold" id="kpi-cost">—</div>
           <div class="stat-sub" id="kpi-cost-total">—</div>
         </div>
         <div class="panel b-3 rise" style="animation-delay:220ms">
           <div class="ring-wrap">
-            <div class="panel-eyebrow"><span class="dash"></span> Focus</div>
+            <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="target"></i> Focus</div>
             <svg class="ring-svg" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" stroke-width="7" />
               <circle id="focus-arc" cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" stroke-width="7"
@@ -472,11 +489,11 @@
         </div>
 
         <div class="panel b-7 rise" style="animation-delay:260ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Fleet status</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Fleet status</div>
           <div id="fleet-list" style="margin-top:10px;"></div>
         </div>
         <div class="panel b-5 rise" style="animation-delay:300ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Errors today</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="alert-triangle"></i> Errors today</div>
           <div class="stat-value coral" id="kpi-errors">—</div>
           <div class="stat-sub">tracked from the logbook — 0 is normal</div>
         </div>
@@ -544,7 +561,7 @@
       </div>
 
       <div class="panel rise" style="margin-top:14px;" id="office-legend-panel">
-        <div class="panel-eyebrow"><span class="dash"></span> Roster</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="contact"></i> Roster</div>
         <div class="office-legend" id="office-legend"></div>
       </div>
     </section>
@@ -553,11 +570,11 @@
     <section class="view" id="view-tasks">
       <div class="bento">
         <div class="panel accent b-6 rise">
-          <div class="panel-eyebrow"><span class="dash"></span> In progress</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="loader-circle"></i> In progress</div>
           <div class="rowlist" id="tasks-open" style="margin-top:14px;"></div>
         </div>
         <div class="panel b-6 rise" style="animation-delay:80ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Done today</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="check-circle-2"></i> Done today</div>
           <div class="rowlist" id="tasks-done" style="margin-top:14px;"></div>
         </div>
       </div>
@@ -566,12 +583,12 @@
     <!-- SYSTEM MONITOR -->
     <section class="view" id="view-monitor">
       <div class="bento">
-        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span> Model</div><div class="stat-value" id="mon-model" style="font-size:20px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span> Tokens in / today</div><div class="stat-value signal" id="mon-in" style="font-size:26px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span> Tokens out / today</div><div class="stat-value signal" id="mon-out" style="font-size:26px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span> Est. cost (total)</div><div class="stat-value gold" id="mon-total" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="cpu"></i> Model</div><div class="stat-value" id="mon-model" style="font-size:20px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="arrow-down-circle"></i> Tokens in / today</div><div class="stat-value signal" id="mon-in" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="arrow-up-circle"></i> Tokens out / today</div><div class="stat-value signal" id="mon-out" style="font-size:26px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="circle-dollar-sign"></i> Est. cost (total)</div><div class="stat-value gold" id="mon-total" style="font-size:26px;">—</div></div>
         <div class="panel b-1 rise" style="animation-delay:160ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Cost &amp; usage by agent</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="table-properties"></i> Cost &amp; usage by agent</div>
           <table style="margin-top:14px;">
             <thead><tr><th>Agent</th><th style="text-align:right">Turns</th><th style="text-align:right">Tokens in</th><th style="text-align:right">Tokens out</th><th style="text-align:right">Est. cost</th></tr></thead>
             <tbody id="mon-table"></tbody>
@@ -584,12 +601,12 @@
     <!-- HOST -->
     <section class="view" id="view-host">
       <div class="bento">
-        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span> Platform</div><div class="stat-value" id="host-platform" style="font-size:24px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span> Uptime</div><div class="stat-value" id="host-uptime" style="font-size:24px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span> Load avg (1m)</div><div class="stat-value" id="host-load" style="font-size:24px;">—</div></div>
-        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span> Memory used</div><div class="stat-value" id="host-mem" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="server"></i> Platform</div><div class="stat-value" id="host-platform" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:40ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="clock"></i> Uptime</div><div class="stat-value" id="host-uptime" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:80ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="gauge"></i> Load avg (1m)</div><div class="stat-value" id="host-load" style="font-size:24px;">—</div></div>
+        <div class="panel stat b-3 rise" style="animation-delay:120ms"><div class="panel-eyebrow"><span class="dash"></span><i data-lucide="memory-stick"></i> Memory used</div><div class="stat-value" id="host-mem" style="font-size:24px;">—</div></div>
         <div class="panel b-1 rise" style="animation-delay:160ms">
-          <div class="panel-eyebrow"><span class="dash"></span> Scheduled jobs</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="calendar-clock"></i> Scheduled jobs</div>
           <div class="rowlist" id="host-jobs" style="margin-top:14px;"></div>
           <p class="empty" style="margin-top:14px;">launchd on macOS, systemd on Linux — filtered to this crew's own jobs.</p>
         </div>
@@ -599,14 +616,14 @@
     <!-- SCHEDULE -->
     <section class="view" id="view-schedule">
       <div class="panel accent rise" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Service control</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="power"></i> Service control</div>
         <p style="color:var(--dim); font-size:13px; margin-top:8px; max-width:60ch;">
           Pit Crew doesn't have a cron subsystem the way some agent runtimes do — instead of scheduled jobs, it has two
           long-running services. Start, stop, or restart them here. Actions are strictly allowlisted to these two services only.
         </p>
       </div>
       <div class="panel rise" style="animation-delay:60ms">
-        <div class="panel-eyebrow"><span class="dash"></span> Fleet &amp; dashboard services</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="server"></i> Fleet &amp; dashboard services</div>
         <div id="svc-list" style="margin-top:12px;"></div>
         <p class="empty" id="svc-note" style="margin-top:14px;"></p>
       </div>
@@ -637,7 +654,7 @@
       </div>
       <div class="docs">
         <div class="panel rise">
-          <div class="panel-eyebrow"><span class="dash"></span> Library</div>
+          <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="folder-open"></i> Library</div>
           <div id="content-filter" style="display:flex; flex-wrap:wrap; gap:6px; margin:12px 0;"></div>
           <div id="doc-list"></div>
           <div class="doc-toolbar" style="margin-top:14px;">
@@ -681,7 +698,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-overview" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tab · Command Center</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="layout-dashboard"></i> Tab · Command Center</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">Your fleet at a glance</div>
         <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The landing screen — one live snapshot of the whole system. It refreshes on its own every few seconds.</p>
         <div style="margin-top:14px;">
@@ -694,7 +711,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-agents" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tab · Agents</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="users"></i> Tab · Agents</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">Every specialist, measured</div>
         <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">The performance view for the Foreman plus Radar, Quill, Wrench, and Ledger.</p>
         <div style="margin-top:14px;">
@@ -704,7 +721,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-chat" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tab · Chat</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="message-square"></i> Tab · Chat</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">A direct line to the fleet</div>
         <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Talk to any agent right from the dashboard. Every message runs a <b>real</b> turn on your model — not a canned reply — using that agent's own charter from <span style="font-family:var(--mono);">agents.js</span>.</p>
         <div style="margin-top:14px;">
@@ -714,7 +731,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-tasks" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tabs · Tasks &amp; Kanban</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="list-checks"></i> Tabs · Tasks &amp; Kanban</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">Two different kinds of "task"</div>
         <div style="margin-top:14px;">
           <div class="doc-row"><div class="k">Tasks tab</div><div class="v">Real agent work — what's currently in progress and what finished today, straight from the logbook. This is agent activity, not your own to-do list.<span class="src">source · logbook.db</span></div></div>
@@ -723,7 +740,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-schedule" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tab · Schedule</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="calendar-clock"></i> Tab · Schedule</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">Service control</div>
         <p style="color:var(--dim); font-size:13px; margin-top:6px; max-width:70ch;">Pit Crew doesn't run a cron subsystem — it has two long-running services instead. This tab starts, stops, or restarts them, strictly limited to those two, nothing else.</p>
         <div style="margin-top:14px;">
@@ -733,7 +750,7 @@
       </div>
 
       <div class="panel rise doc-section" id="doc-content" style="margin-bottom:14px;">
-        <div class="panel-eyebrow"><span class="dash"></span> Tab · Content</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="folder-open"></i> Tab · Content</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px;">Everything written to disk</div>
         <div style="margin-top:14px;">
           <div class="doc-row"><div class="k">Per-agent library</div><div class="v">Each agent gets its own folder. Filter the library by agent, click a doc to read it, create new ones, edit in place, or delete.<span class="src">source · content/&lt;agent&gt;/*.md|*.txt</span></div></div>
@@ -742,7 +759,7 @@
       </div>
 
       <div class="panel accent rise doc-section" id="doc-safety">
-        <div class="panel-eyebrow"><span class="dash"></span> Under the hood · Data &amp; safety</div>
+        <div class="panel-eyebrow"><span class="dash"></span><i data-lucide="shield-check"></i> Under the hood · Data &amp; safety</div>
         <div class="panel-title" style="font-size:20px; margin-top:8px; color:var(--ink);">Real data, kept separate</div>
         <div style="margin-top:14px;">
           <div class="doc-row"><div class="k">Read-only on the logbook</div><div class="v">The dashboard opens logbook.db strictly read-only. It can never corrupt or change what the fleet has recorded.</div></div>
@@ -810,7 +827,7 @@
         const d = await fetch("/api/agent?key=" + encodeURIComponent(agentKey)).then((r) => r.json());
         if (!d || d.error) { document.getElementById("drawer-body").innerHTML = '<div class="empty">Not found</div>'; return; }
         document.getElementById("drawer-body").innerHTML =
-          '<div class="panel-eyebrow"><span class="dash"></span> Agent detail</div>' +
+          '<div class="panel-eyebrow"><span class="dash"></span><i data-lucide="user"></i> Agent detail</div>' +
           '<h2 style="font-size:26px; text-transform:capitalize; margin-top:8px;">' + d.name + '</h2>' +
           '<div class="stat-sub" style="margin-top:2px;">' + d.role + '</div>' +
           '<div class="meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;">' +
@@ -819,16 +836,17 @@
             '<div class="meta-tile"><div class="l">Cost</div><div class="v">' + money(d.cost) + '</div></div>' +
             '<div class="meta-tile"><div class="l">Errors</div><div class="v">' + num(d.errors) + '</div></div>' +
           '</div>' +
-          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span> Models used</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span><i data-lucide="cpu"></i> Models used</div>' +
           '<div style="margin-top:8px;">' + (d.models.length
             ? d.models.map((m) => '<div class="model-row"><span class="n">' + esc(m.model) + '</span><span class="c">' + m.count + ' turns</span></div>').join("")
             : '<div class="empty">no finished turns yet</div>') + '</div>' +
-          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span> Recent activity</div>' +
+          '<div class="panel-eyebrow" style="margin-top:22px;"><span class="dash"></span><i data-lucide="activity"></i> Recent activity</div>' +
           '<div style="margin-top:8px;">' + (d.recent.length
             ? d.recent.map((e) => '<div class="rrow"><span class="t">' + fmt(e.ts) + '</span><span class="k">' + e.kind + '</span><span class="s">' + esc(e.summary) + '</span></div>').join("")
             : '<div class="empty">nothing logged yet</div>') + '</div>' +
-          (d.lastError ? '<div class="panel-eyebrow" style="margin-top:22px; color:var(--coral);"><span class="dash" style="background:var(--coral);"></span> Last error</div>' +
+          (d.lastError ? '<div class="panel-eyebrow" style="margin-top:22px; color:var(--coral);"><span class="dash" style="background:var(--coral);"></span><i data-lucide="alert-triangle" style="color:var(--coral);"></i> Last error</div>' +
             '<div class="rrow" style="margin-top:8px;"><span class="t">' + fmt(d.lastError.ts) + '</span><span class="s">' + esc(d.lastError.summary) + '</span></div>' : '');
+        if (window.lucide) lucide.createIcons();
       }
       window.openDrawer = openDrawer; // used by the Office 3D scene's click handler
 
@@ -1180,6 +1198,7 @@
       }
       tick();
       setInterval(tick, 4000);
+      if (window.lucide) lucide.createIcons(); // renders every static <i data-lucide> on the page once
     </script>
 
     <!-- Office — a 3D shop floor, one building per agent. This is the only
