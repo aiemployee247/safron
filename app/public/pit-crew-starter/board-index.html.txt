@@ -1222,7 +1222,7 @@
       const CAMERA_START = { x: 20, y: 17, z: 24 };
 
       let officeStarted = false;
-      let scene, camera, renderer, controls, raycaster, mouse, clock;
+      let scene, camera, renderer, controls, raycaster, mouse, clock, composer, bloomPass;
       const buildings = {}; // agent key -> { group, glowMats, glow, baseY, phase, targetEmissive, targetGlow, lastTurns }
 
       async function initOffice() {
@@ -1231,7 +1231,10 @@
         try {
           const THREE = await import("three");
           const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
-          buildScene(THREE, OrbitControls);
+          const { EffectComposer } = await import("three/addons/postprocessing/EffectComposer.js");
+          const { RenderPass } = await import("three/addons/postprocessing/RenderPass.js");
+          const { UnrealBloomPass } = await import("three/addons/postprocessing/UnrealBloomPass.js");
+          buildScene(THREE, OrbitControls, { EffectComposer, RenderPass, UnrealBloomPass });
         } catch (err) {
           const wrap = document.getElementById("office-canvas-wrap");
           wrap.innerHTML = '<div class="office-loading"><div class="t1">Could not load the 3D view</div>' +
@@ -1240,7 +1243,7 @@
       }
       window.initOffice = initOffice;
 
-      function buildScene(THREE, OrbitControls) {
+      function buildScene(THREE, OrbitControls, PP) {
         const wrap = document.getElementById("office-canvas-wrap");
         const width = wrap.clientWidth, height = wrap.clientHeight;
         clock = new THREE.Clock();
@@ -1256,7 +1259,19 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height);
         renderer.shadowMap.enabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
         wrap.insertBefore(renderer.domElement, wrap.firstChild);
+
+        // Real bloom, not just a brighter material — bright emissive surfaces
+        // (active buildings, windows, the HQ beacon) genuinely bleed light into
+        // the scene around them. This is the actual technique for "glowing"
+        // 3D lights, not a KM-specific trick — it's Three.js's own official
+        // postprocessing pass.
+        composer = new PP.EffectComposer(renderer);
+        composer.addPass(new PP.RenderPass(scene, camera));
+        bloomPass = new PP.UnrealBloomPass(new THREE.Vector2(width, height), 0.6, 0.4, 0.32);
+        composer.addPass(bloomPass);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -1439,6 +1454,8 @@
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
+        if (composer) composer.setSize(width, height);
+        if (bloomPass) bloomPass.resolution.set(width, height);
       }
 
       function onClick(THREE, e) {
@@ -1462,17 +1479,17 @@
         for (const key in buildings) {
           const b = buildings[key];
           const flashing = performance.now() < b.flashUntil;
-          const target = flashing ? 1.5 : b.targetEmissive;
-          const current = b.glowMats[0].emissiveIntensity + (target - b.glowMats[0].emissiveIntensity) * 0.12;
+          const target = flashing ? 1.9 : b.targetEmissive;
+          const current = b.glowMats[0].emissiveIntensity + (target - b.glowMats[0].emissiveIntensity) * 0.1;
           b.glowMats.forEach((m) => { m.emissiveIntensity = current; });
-          b.glow.intensity += ((flashing ? 4 : b.targetGlow) - b.glow.intensity) * 0.12;
-          if (b.pathMat) b.pathMat.opacity += ((b.targetEmissive > 0.4 ? 0.7 : 0.18) - b.pathMat.opacity) * 0.08;
+          b.glow.intensity += ((flashing ? 2 : b.targetGlow) - b.glow.intensity) * 0.1;
+          if (b.pathMat) b.pathMat.opacity += ((b.targetEmissive > 1 ? 0.7 : 0.18) - b.pathMat.opacity) * 0.08;
           // gentle idle bob + sway, per-building phase so they don't move in lockstep
           b.group.position.y = b.baseY + Math.sin(t * 0.6 + b.phase) * 0.035;
           b.group.rotation.y = Math.sin(t * 0.3 + b.phase) * 0.015;
           if (b.dish) b.dish.rotation.z = t * 0.25 + b.phase;
         }
-        renderer.render(scene, camera);
+        composer.render();
       }
 
       async function pollOfficeData() {
@@ -1487,8 +1504,8 @@
             if (!b) return;
             const active = a.status === "active";
             if (active) lit++;
-            b.targetEmissive = active ? 0.85 : 0.12;
-            b.targetGlow = active ? 2.4 : 0;
+            b.targetEmissive = active ? 1.1 : 0.12;
+            b.targetGlow = active ? 1.1 : 0;
             // a fresh turn since the last poll gets a brief bright flash on top of the steady glow
             if (b.lastTurns !== null && a.turns > b.lastTurns) b.flashUntil = performance.now() + 900;
             b.lastTurns = a.turns;
