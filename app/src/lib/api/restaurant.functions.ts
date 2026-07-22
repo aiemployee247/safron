@@ -34,6 +34,12 @@ export const placeRestaurantOrder = createServerFn({ method: "POST" })
           error: "We couldn't find that address. Please check it and include a valid ZIP code so we can confirm delivery.",
         };
       }
+      if (delivery.status === "out_of_area") {
+        return {
+          ok: false as const,
+          error: `Sorry, we don't currently deliver to ZIP ${delivery.zip}. Try pickup instead, or order to a closer address.`,
+        };
+      }
       if (delivery.status === "out_of_range") {
         return {
           ok: false as const,

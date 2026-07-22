@@ -63,6 +63,21 @@ test.describe("Saffron Court demo", () => {
     await expect(cart.getByText(/include a valid ZIP code/)).toBeVisible();
   });
 
+  test("a delivery address with a 5-digit house number resolves to the trailing ZIP", async ({ page }) => {
+    await page.goto("/demo/saffron-court");
+    await page.getByRole("button", { name: "Add" }).first().click();
+    const cart = page.locator(".sc-cart");
+    await cart.getByLabel("Delivery", { exact: true }).check();
+    await cart.getByLabel("Name").fill("Big House Number");
+    await cart.getByLabel("Phone").fill("555-0122");
+    // The house number is itself 5 digits — the ZIP is the trailing 78741
+    // (in-radius), not the leading "10000". A first-token match would wrongly
+    // reject this valid, deliverable address.
+    await cart.getByLabel("Delivery address").fill("10000 Burnet Rd, Austin, TX 78741");
+    await cart.getByRole("button", { name: /Place order/ }).click();
+    await expect(cart.getByText(/Order ORD-/)).toBeVisible();
+  });
+
   test("booking a table in a valid slot is confirmed", async ({ page }) => {
     await page.goto("/demo/saffron-court");
     const booking = page.locator("#book");

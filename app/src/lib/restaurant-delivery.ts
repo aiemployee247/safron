@@ -1,9 +1,10 @@
 // Delivery-radius check for online orders. Saffron Court only delivers within a
 // fixed radius of its kitchen. An address is resolved to a US ZIP code, and that
-// ZIP is looked up against the kitchen's known service area. Two failure modes
+// ZIP is looked up against the kitchen's known service area. Three failure modes
 // are kept distinct so the customer gets the right nudge:
-//   - the address doesn't resolve to a ZIP we recognise → ask them to fix it
-//   - the ZIP resolves but sits beyond the radius     → out-of-range, offer pickup
+//   - no ZIP-shaped token in the address at all        → ask them to fix it
+//   - a valid ZIP we simply don't serve                 → out-of-area, offer pickup
+//   - a known ZIP that sits beyond the radius           → out-of-range, offer pickup
 // Distances are approximate demo data — not sourced from any real geocoder.
 
 export const DELIVERY_RADIUS_MILES = 6;
@@ -26,22 +27,29 @@ const ZIP_DISTANCE_MILES: Record<string, number> = {
   "78748": 11.4,
 };
 
-// Pull the first US-style 5-digit ZIP (optionally ZIP+4) out of a free-form
-// address string. Returns null when there's no ZIP-shaped token at all.
+// Pull the US-style 5-digit ZIP (optionally ZIP+4) out of a free-form address
+// string. A US ZIP conventionally sits at the end of the address, so when more
+// than one 5-digit token is present (e.g. a 5-digit house number) we take the
+// last — the leading number is the street number, not the ZIP. Returns null
+// when there's no ZIP-shaped token at all.
 export function extractZip(address: string): string | null {
-  const match = address.match(/\b(\d{5})(?:-\d{4})?\b/);
-  return match ? match[1] : null;
+  const matches = address.match(/\b\d{5}(?:-\d{4})?\b/g);
+  return matches ? matches[matches.length - 1].slice(0, 5) : null;
 }
 
 export type DeliveryCheck =
   | { status: "ok"; zip: string; distanceMiles: number }
   | { status: "unresolved" }
+  | { status: "out_of_area"; zip: string }
   | { status: "out_of_range"; zip: string; distanceMiles: number };
 
 // Resolve a delivery address to a ZIP and decide whether we can deliver to it.
 export function checkDeliveryAddress(address: string): DeliveryCheck {
   const zip = extractZip(address);
-  if (!zip || !(zip in ZIP_DISTANCE_MILES)) return { status: "unresolved" };
+  if (!zip) return { status: "unresolved" };
+  // A well-formed ZIP we don't serve isn't a typo — the customer's input is
+  // fine, we just don't deliver there. Keep it distinct from "unresolved".
+  if (!(zip in ZIP_DISTANCE_MILES)) return { status: "out_of_area", zip };
   const distanceMiles = ZIP_DISTANCE_MILES[zip];
   if (distanceMiles > DELIVERY_RADIUS_MILES) return { status: "out_of_range", zip, distanceMiles };
   return { status: "ok", zip, distanceMiles };
