@@ -37,6 +37,32 @@ test.describe("Saffron Court demo", () => {
     await expect(cart.getByText("Nothing in the cart yet")).not.toBeVisible();
   });
 
+  test("a delivery order to an out-of-radius ZIP is rejected as out of range", async ({ page }) => {
+    await page.goto("/demo/saffron-court");
+    await page.getByRole("button", { name: "Add" }).first().click();
+    const cart = page.locator(".sc-cart");
+    await cart.getByLabel("Delivery", { exact: true }).check();
+    await cart.getByLabel("Name").fill("Far Away");
+    await cart.getByLabel("Phone").fill("555-0120");
+    // 78748 is a known ZIP but sits past the 6-mile delivery radius.
+    await cart.getByLabel("Delivery address").fill("100 Distant Rd, Austin, TX 78748");
+    await cart.getByRole("button", { name: /Place order/ }).click();
+    await expect(cart.getByText(/outside our 6-mile delivery radius/)).toBeVisible();
+  });
+
+  test("a delivery order to an unrecognisable address asks the user to correct it", async ({ page }) => {
+    await page.goto("/demo/saffron-court");
+    await page.getByRole("button", { name: "Add" }).first().click();
+    const cart = page.locator(".sc-cart");
+    await cart.getByLabel("Delivery", { exact: true }).check();
+    await cart.getByLabel("Name").fill("No Zip");
+    await cart.getByLabel("Phone").fill("555-0121");
+    // No resolvable ZIP — distinct from the out-of-radius message.
+    await cart.getByLabel("Delivery address").fill("somewhere down the street");
+    await cart.getByRole("button", { name: /Place order/ }).click();
+    await expect(cart.getByText(/include a valid ZIP code/)).toBeVisible();
+  });
+
   test("booking a table in a valid slot is confirmed", async ({ page }) => {
     await page.goto("/demo/saffron-court");
     const booking = page.locator("#book");
