@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { bindings } from "../bindings.server";
+import { DELIVERY_RADIUS_MILES, checkDeliveryAddress } from "../restaurant-delivery";
 import { MENU_BY_ID, TOTAL_SEATING_CAPACITY, isBookableTime } from "../restaurant-menu";
 
 function orderId() {
@@ -22,8 +23,23 @@ export const placeRestaurantOrder = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    if (data.fulfillment === "delivery" && data.address.length < 5) {
-      return { ok: false as const, error: "Delivery orders need a real address." };
+    if (data.fulfillment === "delivery") {
+      if (data.address.length < 5) {
+        return { ok: false as const, error: "Delivery orders need a real address." };
+      }
+      const delivery = checkDeliveryAddress(data.address);
+      if (delivery.status === "unresolved") {
+        return {
+          ok: false as const,
+          error: "We couldn't find that address. Please check it and include a valid ZIP code so we can confirm delivery.",
+        };
+      }
+      if (delivery.status === "out_of_range") {
+        return {
+          ok: false as const,
+          error: `Sorry, that address is outside our ${DELIVERY_RADIUS_MILES}-mile delivery radius. Try pickup instead, or order to a closer address.`,
+        };
+      }
     }
     // Recompute every line server-side — never trust a client-submitted price.
     let subtotalCents = 0;
